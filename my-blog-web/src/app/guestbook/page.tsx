@@ -243,7 +243,7 @@ function MessageItem({ message, onReply }: MessageItemProps) {
               <span>{message.likes + (isLiked ? 1 : 0)}</span>
             </motion.button>
             <motion.button
-              onClick={() => onReply(message.id)}
+              onClick={() => onReply(Number(message.id))}
               className="flex items-center space-x-1 hover:text-primary transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -309,7 +309,7 @@ export default function GuestbookPage() {
     
     const newMessage: GuestbookMessage = {
       ...messageData,
-      id: Date.now(),
+      id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       likes: 0,
       isApproved: true
@@ -318,7 +318,7 @@ export default function GuestbookPage() {
     if (replyingTo) {
       // 添加回复
       setMessages(prev => prev.map(message => 
-        message.id === replyingTo 
+        message.id === replyingTo.toString() 
           ? { ...message, replies: [...(message.replies || []), newMessage] }
           : message
       ));

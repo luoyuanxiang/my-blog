@@ -135,7 +135,7 @@ function TagItem({ tag, index, isHovered, onHover }: Omit<TagItemProps, 'total'>
 }
 
 export function AnimatedTagCloud({ tags, className }: AnimatedTagCloudProps) {
-  const [hoveredTag, setHoveredTag] = useState<number | null>(null);
+  const [hoveredTag, setHoveredTag] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // 背景动画

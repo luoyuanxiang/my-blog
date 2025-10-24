@@ -2,12 +2,12 @@ import { httpClient } from './client';
 import type { LoginRequest, LoginResponse, ApiResponse } from '@/types';
 
 /**
- * 认证API服务
- * 处理用户登录、注册、登出等认证相关操作
+ * 管理端认证API服务
+ * 处理管理员登录、登出等认证相关操作
  */
-export class AuthApiService {
+export class AdminAuthApiService {
   /**
-   * 用户登录
+   * 管理员登录
    * @param credentials 登录凭据
    * @returns 登录响应
    */
@@ -16,7 +16,7 @@ export class AuthApiService {
   }
 
   /**
-   * 用户登出
+   * 管理员登出
    * @returns 登出响应
    */
   async logout(): Promise<ApiResponse<void>> {
@@ -32,8 +32,8 @@ export class AuthApiService {
   }
 
   /**
-   * 获取当前用户信息
-   * @returns 用户信息
+   * 获取当前管理员信息
+   * @returns 管理员信息
    */
   async getCurrentUser(): Promise<ApiResponse<any>> {
     return httpClient.get<ApiResponse<any>>('/auth/me');
@@ -50,4 +50,4 @@ export class AuthApiService {
 }
 
 // 导出服务实例
-export const authApiService = new AuthApiService();
+export const adminAuthApiService = new AdminAuthApiService();

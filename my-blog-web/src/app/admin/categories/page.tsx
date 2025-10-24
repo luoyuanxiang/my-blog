@@ -185,7 +185,12 @@ export default function CategoriesManagement() {
         onClose={handleCloseModal}
         onSubmit={handleSubmitCategory}
         type="category"
-        initialData={editingCategory || undefined}
+        initialData={editingCategory ? {
+          name: editingCategory.name,
+          slug: editingCategory.slug,
+          description: editingCategory.description || '',
+          color: editingCategory.color || '#3b82f6'
+        } : undefined}
         title={editingCategory ? '编辑分类' : '添加分类'}
       />
     </div>

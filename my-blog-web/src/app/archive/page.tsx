@@ -26,12 +26,12 @@ const archiveData: ArchiveItem[] = [
         readTime: 8,
         views: 1250,
         likes: 45,
-        category: { id: 1, name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
+        category: { id: '1', name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
         tags: [
-          { id: 1, name: 'Next.js', slug: 'nextjs', color: '#000000', articleCount: 15, createdAt: '2024-01-01' },
-          { id: 2, name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' }
+          { id: '1', name: 'Next.js', slug: 'nextjs', color: '#000000', articleCount: 15, createdAt: '2024-01-01' },
+          { id: '2', name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' }
         ],
-        author: { id: 1, name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
+        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
         comments: [],
         isPublished: true
       },
@@ -47,12 +47,12 @@ const archiveData: ArchiveItem[] = [
         readTime: 12,
         views: 980,
         likes: 32,
-        category: { id: 2, name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
+        category: { id: '2', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
         tags: [
-          { id: 3, name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
-          { id: 4, name: 'JavaScript', slug: 'javascript', color: '#f7df1e', articleCount: 30, createdAt: '2024-01-01' }
+          { id: '3', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
+          { id: '4', name: 'JavaScript', slug: 'javascript', color: '#f7df1e', articleCount: 30, createdAt: '2024-01-01' }
         ],
-        author: { id: 1, name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
+        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
         comments: [],
         isPublished: true
       },
@@ -68,12 +68,12 @@ const archiveData: ArchiveItem[] = [
         readTime: 15,
         views: 2100,
         likes: 78,
-        category: { id: 1, name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
+        category: { id: '1', name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
         tags: [
-          { id: 2, name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' },
-          { id: 5, name: '并发', slug: 'concurrent', color: '#8b5cf6', articleCount: 5, createdAt: '2024-01-01' }
+          { id: '2', name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' },
+          { id: '5', name: '并发', slug: 'concurrent', color: '#8b5cf6', articleCount: 5, createdAt: '2024-01-01' }
         ],
-        author: { id: 1, name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
+        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
         comments: [],
         isPublished: true
       }
@@ -95,12 +95,12 @@ const archiveData: ArchiveItem[] = [
         readTime: 12,
         views: 980,
         likes: 32,
-        category: { id: 2, name: '后端开发', slug: 'backend', color: '#10b981', articleCount: 18, createdAt: '2024-01-01' },
+        category: { id: '2', name: '后端开发', slug: 'backend', color: '#10b981', articleCount: 18, createdAt: '2024-01-01' },
         tags: [
-          { id: 6, name: 'Node.js', slug: 'nodejs', color: '#339933', articleCount: 12, createdAt: '2024-01-01' },
-          { id: 7, name: '性能优化', slug: 'performance', color: '#f59e0b', articleCount: 8, createdAt: '2024-01-01' }
+          { id: '6', name: 'Node.js', slug: 'nodejs', color: '#339933', articleCount: 12, createdAt: '2024-01-01' },
+          { id: '7', name: '性能优化', slug: 'performance', color: '#f59e0b', articleCount: 8, createdAt: '2024-01-01' }
         ],
-        author: { id: 1, name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
+        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
         comments: [],
         isPublished: true
       },
@@ -116,12 +116,12 @@ const archiveData: ArchiveItem[] = [
         readTime: 10,
         views: 750,
         likes: 28,
-        category: { id: 3, name: '数据库', slug: 'database', color: '#f59e0b', articleCount: 12, createdAt: '2024-01-01' },
+        category: { id: '3', name: '数据库', slug: 'database', color: '#f59e0b', articleCount: 12, createdAt: '2024-01-01' },
         tags: [
-          { id: 8, name: 'MongoDB', slug: 'mongodb', color: '#47a248', articleCount: 8, createdAt: '2024-01-01' },
-          { id: 9, name: '数据库设计', slug: 'database-design', color: '#8b5cf6', articleCount: 6, createdAt: '2024-01-01' }
+          { id: '8', name: 'MongoDB', slug: 'mongodb', color: '#47a248', articleCount: 8, createdAt: '2024-01-01' },
+          { id: '9', name: '数据库设计', slug: 'database-design', color: '#8b5cf6', articleCount: 6, createdAt: '2024-01-01' }
         ],
-        author: { id: 1, name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
+        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
         comments: [],
         isPublished: true
       }
@@ -143,12 +143,12 @@ const archiveData: ArchiveItem[] = [
         readTime: 14,
         views: 1100,
         likes: 35,
-        category: { id: 4, name: 'DevOps', slug: 'devops', color: '#ef4444', articleCount: 8, createdAt: '2024-01-01' },
+        category: { id: '4', name: 'DevOps', slug: 'devops', color: '#ef4444', articleCount: 8, createdAt: '2024-01-01' },
         tags: [
-          { id: 10, name: 'Docker', slug: 'docker', color: '#2496ed', articleCount: 6, createdAt: '2024-01-01' },
-          { id: 11, name: '容器化', slug: 'containerization', color: '#06b6d4', articleCount: 4, createdAt: '2024-01-01' }
+          { id: '10', name: 'Docker', slug: 'docker', color: '#2496ed', articleCount: 6, createdAt: '2024-01-01' },
+          { id: '11', name: '容器化', slug: 'containerization', color: '#06b6d4', articleCount: 4, createdAt: '2024-01-01' }
         ],
-        author: { id: 1, name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
+        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
         comments: [],
         isPublished: true
       }

@@ -1,10 +1,10 @@
-import { API_CONFIG, ApiError, HTTP_STATUS } from './config';
+import {API_CONFIG, ApiError, HTTP_STATUS} from './config';
 
 // HTTP 客户端类
 class HttpClient {
-  private baseURL: string;
-  private timeout: number;
-  private defaultHeaders: Record<string, string>;
+  private readonly baseURL: string;
+  private readonly timeout: number;
+  private readonly defaultHeaders: Record<string, string>;
 
   constructor() {
     this.baseURL = API_CONFIG.BASE_URL;
@@ -15,22 +15,33 @@ class HttpClient {
   // 获取认证 token
   private getAuthToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
+      // 优先获取管理端token，如果没有则获取普通用户token
+      return localStorage.getItem('admin_token') || localStorage.getItem('token');
     }
     return null;
   }
 
   // 设置认证 token
-  setAuthToken(token: string): void {
+  setAuthToken(token: string, isAdmin: boolean = false): void {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
+      if (isAdmin) {
+        localStorage.setItem('admin_token', token);
+      } else {
+        localStorage.setItem('token', token);
+      }
     }
   }
 
   // 清除认证 token
-  clearAuthToken(): void {
+  clearAuthToken(isAdmin: boolean = false): void {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
+      if (isAdmin) {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+      } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
   }
 
@@ -70,8 +81,7 @@ class HttpClient {
     }
 
     try {
-      const data = await response.json();
-      return data;
+        return await response.json();
     } catch {
       throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, '响应解析失败');
     }

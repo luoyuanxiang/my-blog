@@ -21,6 +21,7 @@ import {
   ChevronRight,
   UserCircle
 } from 'lucide-react';
+import { AdminAuthProvider, AdminAuthGuard, useAdminAuth } from '@/lib/hooks/use-admin-auth';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -36,17 +37,16 @@ const navigation = [
   { name: '系统设置', href: '/admin/settings', icon: Settings },
 ];
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+function AdminLayoutContent({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const { user, logout, isAuthenticated, isLoading } = useAdminAuth();
 
-  const handleLogout = () => {
-    // 这里应该调用登出 API
-    console.log('登出');
+  const handleLogout = async () => {
+    await logout();
     setUserDropdownOpen(false);
-    // router.push('/admin/login');
   };
 
   const handleUserCenter = () => {
@@ -58,6 +58,27 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   // 如果是登录页面，直接返回 children，不显示菜单栏
   if (pathname === '/admin/login') {
     return <>{children}</>;
+  }
+
+  // 对于其他管理端页面，需要认证保护
+  if (!isLoading && !isAuthenticated) {
+    // 重定向到登录页面
+    if (typeof window !== 'undefined') {
+      window.location.href = '/admin/login';
+    }
+    return null;
+  }
+
+  // 加载中状态
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">加载中...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -204,8 +225,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     <User className="h-4 w-4 text-white" />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-medium text-gray-900">管理员</p>
-                    <p className="text-xs text-gray-500">admin@example.com</p>
+                    <p className="text-sm font-medium text-gray-900">{user?.nickname || user?.username || '管理员'}</p>
+                    <p className="text-xs text-gray-500">{user?.email || 'admin@example.com'}</p>
                   </div>
                 </button>
 
@@ -253,5 +274,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         />
       )}
     </div>
+  );
+}
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  return (
+    <AdminAuthProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AdminAuthProvider>
   );
 }

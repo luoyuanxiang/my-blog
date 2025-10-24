@@ -215,23 +215,14 @@ export interface ArchiveItem {
  * 用于表示API接口的统一响应格式
  */
 export interface ApiResponse<T> {
-  /** 请求是否成功 */
-  success: boolean;
+  /** HTTP状态码 */
+  code: number;
+  /** 响应消息 */
+  message: string;
   /** 响应数据 */
   data: T;
-  /** 响应消息（可选） */
-  message?: string;
-  /** 分页信息（可选） */
-  pagination?: {
-    /** 当前页码 */
-    page: number;
-    /** 每页数量 */
-    limit: number;
-    /** 总记录数 */
-    total: number;
-    /** 总页数 */
-    totalPages: number;
-  };
+  /** 响应时间戳 */
+  timestamp: number;
 }
 
 /**
@@ -281,6 +272,51 @@ export interface ArticleQueryParams extends PaginationParams {
   year?: number;
   /** 按月份筛选（可选） */
   month?: number;
+}
+
+/**
+ * 登录请求类型定义
+ * 用于表示用户登录请求的参数
+ */
+export interface LoginRequest {
+  /** 用户名 */
+  username: string;
+  /** 密码 */
+  password: string;
+}
+
+/**
+ * 登录响应类型定义
+ * 用于表示用户登录成功后的响应数据
+ */
+export interface LoginResponse {
+  /** JWT访问令牌 */
+  token: string;
+  /** 用户信息 */
+  user: {
+    /** 用户唯一标识符 */
+    id: string;
+    /** 用户名 */
+    username: string;
+    /** 用户邮箱 */
+    email?: string;
+    /** 用户昵称 */
+    nickname?: string;
+    /** 用户头像 */
+    avatar?: string;
+    /** 用户个人简介 */
+    bio?: string;
+    /** 用户是否启用 */
+    isEnabled: boolean;
+    /** 用户最后登录时间 */
+    lastLoginAt?: string;
+    /** 用户创建时间 */
+    createdAt: string;
+    /** 用户最后更新时间 */
+    updatedAt: string;
+  };
+  /** 令牌过期时间（毫秒） */
+  expiresIn: number;
 }
 
 /**

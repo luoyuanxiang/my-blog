@@ -51,7 +51,7 @@ export default function TagsManagement() {
     setShowModal(true);
   };
 
-  const handleSubmitTag = (data: { name: string; slug: string; color: string }) => {
+  const handleSubmitTag = (data: { name: string; slug: string; description: string; color: string }) => {
     if (editingTag) {
       // 更新标签
       setTags(tags.map(tag =>
@@ -182,7 +182,12 @@ export default function TagsManagement() {
         onClose={handleCloseModal}
         onSubmit={handleSubmitTag}
         type="tag"
-        initialData={editingTag || undefined}
+        initialData={editingTag ? {
+          name: editingTag.name,
+          slug: editingTag.slug,
+          description: '', // 标签没有description字段，使用空字符串
+          color: editingTag.color || '#3b82f6'
+        } : undefined}
         title={editingTag ? '编辑标签' : '添加标签'}
       />
     </div>

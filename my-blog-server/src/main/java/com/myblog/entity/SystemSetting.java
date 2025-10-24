@@ -30,7 +30,7 @@ public class SystemSetting {
     private Long id;
 
     /** 设置项键名，必填，唯一，最大长度100字符 */
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(name = "`key`", nullable = false, unique = true, length = 100)
     private String key;
 
     /** 设置项值，使用TEXT类型存储长文本 */
