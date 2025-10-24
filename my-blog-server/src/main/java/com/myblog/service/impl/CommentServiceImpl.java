@@ -104,7 +104,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentDTO> getCommentReplies(Long parentId) {
         List<Comment> replies = commentRepository.findByParentIdOrderByCreatedAtAsc(parentId);
-        return replies.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return replies.stream().map(this::convertToDTO).toList();
     }
 
     private CommentDTO convertToDTO(Comment comment) {

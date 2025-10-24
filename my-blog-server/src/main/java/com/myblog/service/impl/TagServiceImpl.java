@@ -76,19 +76,19 @@ public class TagServiceImpl implements TagService {
     @Override
     public List<TagDTO> getAllTags() {
         List<Tag> tags = tagRepository.findAll();
-        return tags.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return tags.stream().map(this::convertToDTO).toList();
     }
 
     @Override
     public List<TagDTO> getTagsWithArticles() {
         List<Tag> tags = tagRepository.findTagsWithArticles();
-        return tags.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return tags.stream().map(this::convertToDTO).toList();
     }
 
     @Override
     public List<TagDTO> getPopularTags() {
         List<Tag> tags = tagRepository.findPopularTags();
-        return tags.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return tags.stream().map(this::convertToDTO).toList();
     }
 
     private TagDTO convertToDTO(Tag tag) {

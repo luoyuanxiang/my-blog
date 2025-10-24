@@ -1,13 +1,14 @@
 'use client';
 
-import { Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { ArticleCard } from '@/components/blog/article-card';
 import { SearchBar } from '@/components/ui/search-bar';
 import { CategoryFilter } from '@/components/ui/category-filter';
 import { TagFilter } from '@/components/ui/tag-filter';
 import { Pagination } from '@/components/ui/pagination';
 import { MainLayout } from '@/components/layout/main-layout';
-import type { Article, Category, Tag } from '@/types';
+import type { Article, Category, Tag, ArticleQueryParams } from '@/types';
+import { articleApiService, categoryApiService, tagApiService } from '@/lib/api';
 
 // 模拟数据 - 实际项目中这些数据应该来自API
 const articles: Article[] = [
@@ -93,47 +94,182 @@ const tags: Tag[] = [
 ];
 
 export default function ArticlesPage() {
-  return (
-    <MainLayout>
-      <div className="container mx-auto px-4 py-8">
-        {/* 页面标题 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">文章列表</h1>
-          <p className="text-muted-foreground">
-            分享技术、记录生活，用文字记录成长的足迹
-          </p>
-        </div>
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // 查询参数
+  const [queryParams, setQueryParams] = useState<ArticleQueryParams>({
+    page: 1,
+    limit: 10,
+    search: '',
+    category: '',
+    tag: '',
+  });
 
-        {/* 搜索和筛选 */}
-        <div className="mb-8 space-y-4">
-          <Suspense fallback={<div>加载中...</div>}>
-            <SearchBar placeholder="搜索文章..." />
-          </Suspense>
-          
-          <div className="flex flex-wrap gap-4">
-            <Suspense fallback={<div>加载中...</div>}>
-              <CategoryFilter categories={categories} />
-            </Suspense>
-            <Suspense fallback={<div>加载中...</div>}>
-              <TagFilter tags={tags} />
-            </Suspense>
+  // 分页信息
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
+
+  // 获取数据
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // 并行获取文章、分类和标签数据
+      const [articlesResponse, categoriesResponse, tagsResponse] = await Promise.all([
+        articleApiService.getArticles(queryParams),
+        categoryApiService.getAllCategories(),
+        tagApiService.getAllTags(),
+      ]);
+
+      setArticles(articlesResponse.content);
+      setCategories(categoriesResponse);
+      setTags(tagsResponse);
+      
+      // 更新分页信息
+      setPagination({
+        page: articlesResponse.page,
+        limit: articlesResponse.size,
+        total: articlesResponse.totalElements,
+        totalPages: articlesResponse.totalPages,
+      });
+    } catch (err) {
+      console.error('获取数据失败:', err);
+      setError('获取数据失败，请稍后重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [queryParams]);
+
+  // 处理搜索
+  const handleSearch = (searchTerm: string) => {
+    setQueryParams(prev => ({
+      ...prev,
+      search: searchTerm,
+      page: 1, // 重置到第一页
+    }));
+  };
+
+  // 处理分类筛选
+  const handleCategoryFilter = (categoryId: string | null) => {
+    setQueryParams(prev => ({
+      ...prev,
+      category: categoryId || '',
+      page: 1, // 重置到第一页
+    }));
+  };
+
+  // 处理标签筛选
+  const handleTagFilter = (tagIds: string[]) => {
+    setQueryParams(prev => ({
+      ...prev,
+      tag: tagIds.length > 0 ? tagIds[0] : '', // 取第一个标签，或者空字符串
+      page: 1, // 重置到第一页
+    }));
+  };
+
+  // 处理分页
+  const handlePageChange = (page: number) => {
+    setQueryParams(prev => ({
+      ...prev,
+      page,
+    }));
+  };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">加载中...</p>
           </div>
         </div>
+      </MainLayout>
+    );
+  }
 
-        {/* 文章列表 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {articles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
-          ))}
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-destructive mb-4">{error}</p>
+            <button 
+              onClick={() => fetchData()} 
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              重新加载
+            </button>
+          </div>
         </div>
+      </MainLayout>
+    );
+  }
 
-        {/* 分页 */}
-        <div className="flex justify-center">
-          <Pagination
-            currentPage={1}
-            totalPages={5}
-            onPageChange={(page) => console.log('Page changed:', page)}
-          />
+  return (
+    <MainLayout>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">文章列表</h1>
+            <p className="text-muted-foreground">探索我们的技术文章和见解</p>
+          </div>
+
+          {/* 搜索和筛选 */}
+          <div className="mb-8 space-y-4">
+            <SearchBar onSearch={handleSearch} placeholder="搜索文章..." />
+            
+            <div className="flex flex-wrap gap-4">
+              <CategoryFilter 
+                categories={categories} 
+                selectedCategory={queryParams.category}
+                onCategoryChange={handleCategoryFilter}
+              />
+              <TagFilter 
+                tags={tags} 
+                selectedTags={queryParams.tag ? [queryParams.tag] : []}
+                onTagsChange={handleTagFilter}
+              />
+            </div>
+          </div>
+
+          {/* 文章列表 */}
+          <div className="space-y-6">
+            {articles.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">暂无文章</p>
+                <p className="text-muted-foreground">请尝试调整搜索条件或筛选器</p>
+              </div>
+            ) : (
+              articles.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))
+            )}
+          </div>
+
+          {/* 分页 */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

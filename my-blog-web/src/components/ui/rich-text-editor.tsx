@@ -29,7 +29,7 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ content, onChange }: Readonly<RichTextEditorProps>) {
   const [showImportModal, setShowImportModal] = useState(false);
   
   const editor = useEditor({

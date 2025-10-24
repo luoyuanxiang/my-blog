@@ -1,21 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Carousel } from '@/components/ui/carousel';
-import { BlogStats } from '@/components/blog/blog-stats';
-import { ArticleCard } from '@/components/blog/article-card';
-import { CategoryCard } from '@/components/blog/category-card';
-import { TagCloud3D } from '@/components/blog/tag-cloud-3d';
-import { AuthorCard } from '@/components/blog/author-card';
-import { MainLayout } from '@/components/layout/main-layout';
+import {useEffect, useState} from 'react';
+import {Carousel} from '@/components/ui/carousel';
+import {BlogStats} from '@/components/blog/blog-stats';
+import {ArticleCard} from '@/components/blog/article-card';
+import {CategoryCard} from '@/components/blog/category-card';
+import {TagCloud3D} from '@/components/blog/tag-cloud-3d';
+import {AuthorCard} from '@/components/blog/author-card';
+import {MainLayout} from '@/components/layout/main-layout';
 import Link from 'next/link';
-import type { Article, BlogStats as BlogStatsType, CarouselItem, Category, Tag } from '@/types';
-import { 
-  articleApiService, 
-  categoryApiService, 
-  tagApiService, 
-  systemSettingApiService 
-} from '@/lib/api';
+import type {Article, BlogStats as BlogStatsType, CarouselItem, Category, Tag} from '@/types';
+import {articleApiService, categoryApiService, tagApiService} from '@/lib/api';
 
 // 模拟数据
 const carouselItems: CarouselItem[] = [
@@ -80,7 +75,7 @@ const recentArticles: Article[] = [
         ],
         author: {
             name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-            id: 0
+            id: '0'
         },
         isPinned: true,
         comments: [],
@@ -119,7 +114,7 @@ const recentArticles: Article[] = [
         author: {
             name: '作者',
             avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-            id: 0
+            id: '0'
         },
         isPinned: false,
         comments: [],
@@ -158,7 +153,7 @@ const recentArticles: Article[] = [
         author: {
             name: '作者',
             avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-            id: 0
+            id: '0'
         },
         isPinned: true,
         comments: [],
@@ -168,7 +163,12 @@ const recentArticles: Article[] = [
 
 const categories: Category[] = [
     {
-        id: '1', name: '前端开发', slug: 'frontend', description: '前端技术相关文章', articleCount: 15, color: '#3B82F6',
+        id: '1',
+        name: '前端开发',
+        slug: 'frontend',
+        description: '前端技术相关文章',
+        articleCount: 15,
+        color: '#3B82F6',
         createdAt: ""
     },
     {
@@ -257,176 +257,177 @@ const author = {
 };
 
 export default function Home() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [blogStats, setBlogStats] = useState<BlogStatsType>({
-    totalArticles: 0,
-    totalViews: 0,
-    totalLikes: 0,
-    totalComments: 0,
-    totalCategories: 0,
-    totalTags: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    const [articles, setArticles] = useState<Article[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [tags, setTags] = useState<Tag[]>([]);
+    const [blogStats, setBlogStats] = useState<BlogStatsType>({
+        totalArticles: 0,
+        totalViews: 0,
+        totalLikes: 0,
+        totalComments: 0,
+        totalCategories: 0,
+        totalTags: 0,
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
 
-        // 并行获取数据
-        const [articlesResponse, categoriesResponse, tagsResponse] = await Promise.all([
-          articleApiService.getLatestArticles(6),
-          categoryApiService.getAllCategories(),
-          tagApiService.getAllTags(),
-        ]);
+                // 并行获取数据
+                const [articlesResponse, categoriesResponse, tagsResponse] = await Promise.all([
+                    articleApiService.getLatestArticles(6),
+                    categoryApiService.getAllCategories(),
+                    tagApiService.getAllTags(),
+                ]);
 
-        setArticles(articlesResponse);
-        setCategories(categoriesResponse);
-        setTags(tagsResponse);
+                setArticles(articlesResponse);
+                setCategories(categoriesResponse);
+                setTags(tagsResponse);
 
-        // 计算博客统计
-        setBlogStats({
-          totalArticles: articlesResponse.length,
-          totalViews: articlesResponse.reduce((sum, article) => sum + article.views, 0),
-          totalLikes: articlesResponse.reduce((sum, article) => sum + article.likes, 0),
-          totalComments: articlesResponse.reduce((sum, article) => sum + article.comments.length, 0),
-          totalCategories: categoriesResponse.length,
-          totalTags: tagsResponse.length,
-        });
-      } catch (err) {
-        console.error('获取数据失败:', err);
-        setError('获取数据失败，请稍后重试');
-      } finally {
-        setLoading(false);
-      }
-    };
+                // 计算博客统计
+                setBlogStats({
+                    totalArticles: articlesResponse.length,
+                    totalViews: articlesResponse.reduce((sum, article) => sum + article.views, 0),
+                    totalLikes: articlesResponse.reduce((sum, article) => sum + article.likes, 0),
+                    totalComments: articlesResponse.reduce((sum, article) => sum + article.comments.length, 0),
+                    totalCategories: categoriesResponse.length,
+                    totalTags: tagsResponse.length,
+                });
+            } catch (err) {
+                console.error('获取数据失败:', err);
+                setError('获取数据失败，请稍后重试');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    fetchData();
-  }, []);
+        fetchData();
+    }, []);
 
-  if (loading) {
+    if (loading) {
+        return (
+            <MainLayout>
+                <div className="min-h-screen bg-background flex items-center justify-center">
+                    <div className="text-center">
+                        <div
+                            className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">加载中...</p>
+                    </div>
+                </div>
+            </MainLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <MainLayout>
+                <div className="min-h-screen bg-background flex items-center justify-center">
+                    <div className="text-center">
+                        <p className="text-destructive mb-4">{error}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                        >
+                            重新加载
+                        </button>
+                    </div>
+                </div>
+            </MainLayout>
+        );
+    }
+
     return (
-      <MainLayout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">加载中...</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
+        <MainLayout>
+            <div className="min-h-screen bg-background">
+                {/* 轮播图区域 */}
+                <section className="mb-12">
+                    <Carousel items={carouselItems}/>
+                </section>
 
-  if (error) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-destructive mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-            >
-              重新加载
-            </button>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
+                <div className="container mx-auto px-4">
+                    {/* 博客统计 */}
+                    <section className="mb-12">
+                        <h2 className="text-2xl font-bold text-center mb-8 text-foreground">博客统计</h2>
+                        <BlogStats stats={blogStats}/>
+                    </section>
 
-  return (
-    <MainLayout>
-      <div className="min-h-screen bg-background">
-        {/* 轮播图区域 */}
-        <section className="mb-12">
-          <Carousel items={carouselItems} />
-        </section>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* 主要内容区域 */}
+                        <div className="lg:col-span-2">
+                            {/* 最新文章 */}
+                            <section className="mb-12">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-2xl font-bold text-foreground">最新文章</h2>
+                                    <Link
+                                        href="/articles"
+                                        className="text-primary hover:text-primary/80 transition-colors font-medium"
+                                    >
+                                        查看全部 →
+                                    </Link>
+                                </div>
+                                <div className="space-y-6">
+                                    {articles
+                                        .sort((a, b) => {
+                                            // 置顶文章优先显示
+                                            if (a.isPinned && !b.isPinned) return -1;
+                                            if (!a.isPinned && b.isPinned) return 1;
+                                            // 同级别按发布时间排序
+                                            return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+                                        })
+                                        .map((article) => (
+                                            <ArticleCard key={article.id} article={article}/>
+                                        ))}
+                                </div>
+                            </section>
+                        </div>
 
-        <div className="container mx-auto px-4">
-          {/* 博客统计 */}
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold text-center mb-8 text-foreground">博客统计</h2>
-            <BlogStats stats={blogStats} />
-          </section>
+                        {/* 侧边栏 */}
+                        <div className="space-y-8">
+                            {/* 作者信息 */}
+                            <section>
+                                <h3 className="text-xl font-bold mb-4 text-foreground">关于作者</h3>
+                                <AuthorCard author={author}/>
+                            </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* 主要内容区域 */}
-            <div className="lg:col-span-2">
-              {/* 最新文章 */}
-              <section className="mb-12">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-foreground">最新文章</h2>
-                  <Link
-                    href="/articles"
-                    className="text-primary hover:text-primary/80 transition-colors font-medium"
-                  >
-                    查看全部 →
-                  </Link>
+                            {/* 分类 */}
+                            <section>
+                                <h3 className="text-xl font-bold mb-4 text-foreground">文章分类</h3>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {categories.map((category: Category) => (
+                                        <CategoryCard key={category.id} category={category}/>
+                                    ))}
+                                </div>
+                                <div className="mt-4 text-center">
+                                    <a
+                                        href="/categories"
+                                        className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
+                                    >
+                                        查看全部分类 →
+                                    </a>
+                                </div>
+                            </section>
+
+                            {/* 标签云 */}
+                            <section>
+                                <h3 className="text-xl font-bold mb-4 text-foreground">标签云</h3>
+                                <TagCloud3D tags={tags}/>
+                                <div className="mt-4 text-center">
+                                    <a
+                                        href="/tags"
+                                        className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
+                                    >
+                                        查看全部标签 →
+                                    </a>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-6">
-                  {articles
-                    .sort((a, b) => {
-                      // 置顶文章优先显示
-                      if (a.isPinned && !b.isPinned) return -1;
-                      if (!a.isPinned && b.isPinned) return 1;
-                      // 同级别按发布时间排序
-                      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-                    })
-                    .map((article) => (
-                      <ArticleCard key={article.id} article={article} />
-                    ))}
-                </div>
-              </section>
             </div>
-
-            {/* 侧边栏 */}
-            <div className="space-y-8">
-              {/* 作者信息 */}
-              <section>
-                <h3 className="text-xl font-bold mb-4 text-foreground">关于作者</h3>
-                <AuthorCard author={author} />
-              </section>
-
-              {/* 分类 */}
-              <section>
-                <h3 className="text-xl font-bold mb-4 text-foreground">文章分类</h3>
-                <div className="grid grid-cols-1 gap-3">
-                  {categories.map((category) => (
-                    <CategoryCard key={category.id} category={category} />
-                  ))}
-                </div>
-                <div className="mt-4 text-center">
-                  <Link
-                    href="/categories"
-                    className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
-                  >
-                    查看全部分类 →
-                  </Link>
-                </div>
-              </section>
-
-              {/* 标签云 */}
-              <section>
-                <h3 className="text-xl font-bold mb-4 text-foreground">标签云</h3>
-                <TagCloud3D tags={tags} />
-                <div className="mt-4 text-center">
-                  <Link
-                    href="/tags"
-                    className="text-primary hover:text-primary/80 transition-colors text-sm font-medium"
-                  >
-                    查看全部标签 →
-                  </Link>
-                </div>
-              </section>
-            </div>
-          </div>
-        </div>
-      </div>
-    </MainLayout>
-  );
+        </MainLayout>
+    );
 }

@@ -17,7 +17,7 @@ export function CategoryFilter({
   categories, 
   selectedCategory,
   onCategoryChange 
-}: CategoryFilterProps) {
+}: Readonly<CategoryFilterProps>) {
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedCategoryData = categories.find(cat => cat.slug === selectedCategory);

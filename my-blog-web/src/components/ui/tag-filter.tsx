@@ -17,7 +17,7 @@ export function TagFilter({
   tags, 
   selectedTags = [],
   onTagsChange 
-}: TagFilterProps) {
+}: Readonly<TagFilterProps>) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleTagToggle = (tagSlug: string) => {

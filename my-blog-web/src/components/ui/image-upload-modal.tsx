@@ -10,7 +10,7 @@ interface ImageUploadModalProps {
   onInsert: (imageMarkdown: string) => void;
 }
 
-export function ImageUploadModal({ isOpen, onClose, onInsert }: ImageUploadModalProps) {
+export function ImageUploadModal({ isOpen, onClose, onInsert }: Readonly<ImageUploadModalProps>) {
   const [imageUrl, setImageUrl] = useState('');
   const [altText, setAltText] = useState('');
   const [title, setTitle] = useState('');

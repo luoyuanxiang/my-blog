@@ -15,7 +15,7 @@ export function SearchBar({
   placeholder = '搜索...', 
   onSearch,
   className 
-}: SearchBarProps) {
+}: Readonly<SearchBarProps>) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
 

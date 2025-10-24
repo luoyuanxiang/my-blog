@@ -69,7 +69,7 @@ public class FriendLinkServiceImpl implements FriendLinkService {
     @Override
     public List<FriendLinkDTO> getApprovedFriendLinks() {
         List<FriendLink> friendLinks = friendLinkRepository.findByIsApprovedTrueOrderBySortOrderAsc();
-        return friendLinks.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return friendLinks.stream().map(this::convertToDTO).toList();
     }
 
     @Override

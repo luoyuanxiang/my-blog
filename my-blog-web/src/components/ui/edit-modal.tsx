@@ -20,7 +20,7 @@ interface EditModalProps {
   title: string;
 }
 
-export function EditModal({ isOpen, onClose, onSubmit, type, initialData, title }: EditModalProps) {
+export function EditModal({ isOpen, onClose, onSubmit, type, initialData, title }: Readonly<EditModalProps>) {
   const [formData, setFormData] = useState<FormData>(() => {
     if (initialData) {
       return {

@@ -44,7 +44,7 @@ export function CodeBlock({
   language, 
   filename, 
   maxHeight = 400 
-}: CodeBlockProps) {
+}: Readonly<CodeBlockProps>) {
   const [copied, setCopied] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState('');

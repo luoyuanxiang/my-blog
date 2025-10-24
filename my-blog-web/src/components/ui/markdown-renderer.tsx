@@ -9,7 +9,7 @@ interface MarkdownRendererProps {
   content: string;
 }
 
-export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content }: Readonly<MarkdownRendererProps>) {
   return (
     <div className="prose prose-slate dark:prose-invert max-w-none">
       <ReactMarkdown

@@ -50,7 +50,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (articleDTO.getTags() != null && !articleDTO.getTags().isEmpty()) {
             List<Long> tagIds = articleDTO.getTags().stream()
                 .map(tag -> tag.getId())
-                .collect(Collectors.toList());
+                .toList();
             List<Tag> tags = tagRepository.findAllById(tagIds);
             article.setTags(tags);
         }
@@ -78,7 +78,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (articleDTO.getTags() != null && !articleDTO.getTags().isEmpty()) {
             List<Long> tagIds = articleDTO.getTags().stream()
                 .map(tag -> tag.getId())
-                .collect(Collectors.toList());
+                .toList();
             List<Tag> tags = tagRepository.findAllById(tagIds);
             article.setTags(tags);
         }
@@ -143,7 +143,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public List<ArticleDTO> getPinnedArticles() {
         List<Article> articles = articleRepository.findByIsPinnedTrueAndIsPublishedTrueOrderByCreatedAtDesc();
-        return articles.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return articles.stream().map(this::convertToDTO).toList();
     }
 
     @Override
@@ -230,7 +230,7 @@ public class ArticleServiceImpl implements ArticleService {
                     BeanUtils.copyProperties(tag, tagDTO);
                     return tagDTO;
                 })
-                .collect(Collectors.toList());
+                .toList();
             dto.setTags(tagDTOs);
         }
         

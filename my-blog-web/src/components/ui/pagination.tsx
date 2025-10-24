@@ -20,7 +20,7 @@ export function Pagination({
   showPrevNext = true,
   showFirstLast = false,
   maxVisiblePages = 5
-}: PaginationProps) {
+}: Readonly<PaginationProps>) {
   if (totalPages <= 1) return null;
 
   const getVisiblePages = () => {

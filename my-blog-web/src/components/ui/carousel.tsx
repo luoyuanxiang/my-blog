@@ -18,7 +18,7 @@ export function Carousel({
   autoPlay = true, 
   autoPlayInterval = 5000,
   className 
-}: CarouselProps) {
+}: Readonly<CarouselProps>) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
 

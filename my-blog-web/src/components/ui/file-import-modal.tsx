@@ -11,7 +11,7 @@ interface FileImportModalProps {
   editorType: 'rich' | 'markdown';
 }
 
-export function FileImportModal({ isOpen, onClose, onImport, editorType }: FileImportModalProps) {
+export function FileImportModal({ isOpen, onClose, onImport, editorType }: Readonly<FileImportModalProps>) {
   const [dragActive, setDragActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');

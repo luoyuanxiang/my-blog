@@ -37,7 +37,7 @@ const languages = [
   { value: 'markdown', label: 'Markdown' },
 ];
 
-export function CodeInsertModal({ isOpen, onClose, onInsert }: CodeInsertModalProps) {
+export function CodeInsertModal({ isOpen, onClose, onInsert }: Readonly<CodeInsertModalProps>) {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('');
   const [filename, setFilename] = useState('');

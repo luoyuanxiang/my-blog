@@ -17,6 +17,11 @@ import java.util.List;
 
 /**
  * 文章控制器
+ * 提供文章相关的REST API接口
+ * 
+ * @author MyBlog Team
+ * @version 1.0
+ * @since 2024-01-01
  */
 @RestController
 @RequestMapping("/articles")
@@ -24,8 +29,14 @@ import java.util.List;
 @Tag(name = "文章管理", description = "文章的增删改查操作")
 public class ArticleController {
 
+    /** 文章服务实例 */
     private final ArticleService articleService;
 
+    /**
+     * 创建新文章
+     * @param articleDTO 文章数据传输对象
+     * @return 创建结果
+     */
     @PostMapping
     @Operation(summary = "创建文章", description = "创建新的文章")
     public ApiResponse<ArticleDTO> createArticle(@RequestBody ArticleDTO articleDTO) {
@@ -33,6 +44,12 @@ public class ArticleController {
         return ApiResponse.success("文章创建成功", result);
     }
 
+    /**
+     * 更新文章信息
+     * @param id 文章ID
+     * @param articleDTO 文章数据传输对象
+     * @return 更新结果
+     */
     @PutMapping("/{id}")
     @Operation(summary = "更新文章", description = "根据ID更新文章")
     public ApiResponse<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody ArticleDTO articleDTO) {
@@ -40,6 +57,11 @@ public class ArticleController {
         return ApiResponse.success("文章更新成功", result);
     }
 
+    /**
+     * 删除文章
+     * @param id 文章ID
+     * @return 删除结果
+     */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除文章", description = "根据ID删除文章")
     public ApiResponse<Void> deleteArticle(@PathVariable Long id) {

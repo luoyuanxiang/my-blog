@@ -52,7 +52,7 @@ const ToolbarButton = ({ onClick, icon: Icon, title, active = false }: ToolbarBu
   </button>
 );
 
-export function MarkdownEditor({ content, onChange, placeholder = '开始写作...' }: MarkdownEditorProps) {
+export function MarkdownEditor({ content, onChange, placeholder = '开始写作...' }: Readonly<MarkdownEditorProps>) {
   const [isPreview, setIsPreview] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLiveRender, setIsLiveRender] = useState(false);

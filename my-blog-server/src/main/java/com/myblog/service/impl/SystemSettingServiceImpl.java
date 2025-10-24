@@ -67,19 +67,19 @@ public class SystemSettingServiceImpl implements SystemSettingService {
     @Override
     public List<SystemSettingDTO> getAllSettings() {
         List<SystemSetting> settings = systemSettingRepository.findAll();
-        return settings.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return settings.stream().map(this::convertToDTO).toList();
     }
 
     @Override
     public List<SystemSettingDTO> getPublicSettings() {
         List<SystemSetting> settings = systemSettingRepository.findByIsPublicTrue();
-        return settings.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return settings.stream().map(this::convertToDTO).toList();
     }
 
     @Override
     public List<SystemSettingDTO> getSettingsByType(String settingType) {
         List<SystemSetting> settings = systemSettingRepository.findBySettingType(settingType);
-        return settings.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return settings.stream().map(this::convertToDTO).toList();
     }
 
     @Override

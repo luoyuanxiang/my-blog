@@ -110,7 +110,7 @@ public class GuestbookServiceImpl implements GuestbookService {
     @Override
     public List<GuestbookMessageDTO> getMessageReplies(Long parentId) {
         List<GuestbookMessage> replies = guestbookMessageRepository.findByParentIdOrderByCreatedAtAsc(parentId);
-        return replies.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return replies.stream().map(this::convertToDTO).toList();
     }
 
     private GuestbookMessageDTO convertToDTO(GuestbookMessage message) {

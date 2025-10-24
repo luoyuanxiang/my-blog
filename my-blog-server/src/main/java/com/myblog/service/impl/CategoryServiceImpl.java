@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 分类服务实现类
@@ -76,13 +75,13 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<CategoryDTO> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
-        return categories.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return categories.stream().map(this::convertToDTO).toList();
     }
 
     @Override
     public List<CategoryDTO> getCategoriesWithArticles() {
         List<Category> categories = categoryRepository.findCategoriesWithArticles();
-        return categories.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return categories.stream().map(this::convertToDTO).toList();
     }
 
     private CategoryDTO convertToDTO(Category category) {

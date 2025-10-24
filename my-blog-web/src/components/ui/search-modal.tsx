@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, FileText, Tag, FolderOpen } from 'lucide-react';
-import type { SearchResult, Tag } from '@/types';
+import { Search, X, FileText, Tag as TagIcon, FolderOpen } from 'lucide-react';
+import type { SearchResult } from '@/types';
 
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function SearchModal({ isOpen, onClose }: SearchModalProps) {
+export function SearchModal({ isOpen, onClose }: Readonly<SearchModalProps>) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -183,7 +183,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       {results.tags.length > 0 && (
                         <div>
                           <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center">
-                            <Tag className="h-4 w-4 mr-2" />
+                            <TagIcon className="h-4 w-4 mr-2" />
                             标签 ({results.tags.length})
                           </h3>
                           <div className="space-y-2">
