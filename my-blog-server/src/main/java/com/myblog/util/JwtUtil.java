@@ -23,7 +23,18 @@ public class JwtUtil {
     private Long expiration;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        try {
+            // 确保密钥长度至少为256位（32字节）
+            byte[] keyBytes = secret.getBytes();
+            if (keyBytes.length < 64) {
+                // 如果密钥太短，使用SHA-256哈希生成32字节的密钥
+                java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+                keyBytes = digest.digest(secret.getBytes());
+            }
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create signing key", e);
+        }
     }
 
     /**

@@ -10,10 +10,11 @@ import {AuthorCard} from '@/components/blog/author-card';
 import {MainLayout} from '@/components/layout/main-layout';
 import Link from 'next/link';
 import type {Article, BlogStats as BlogStatsType, CarouselItem, Category, Tag} from '@/types';
-import {articleApiService, categoryApiService, tagApiService} from '@/lib/api';
+import {articleApiService, categoryApiService, tagApiService, publicApiService} from '@/lib/api';
+import {useSystemConfig} from '@/lib/hooks/use-system-config';
 
-// 模拟数据
-const carouselItems: CarouselItem[] = [
+// 默认轮播图数据
+const defaultCarouselItems: CarouselItem[] = [
     {
         id: '1',
         title: '欢迎来到我的博客',
@@ -39,17 +40,18 @@ const carouselItems: CarouselItem[] = [
 
 const recentArticles: Article[] = [
     {
-        id: '1',
+        id: 1,
         title: 'Next.js 14 新特性详解',
         slug: 'nextjs-14-features',
-        excerpt: 'Next.js 14 带来了许多令人兴奋的新特性，包括改进的 App Router、更好的性能优化和增强的开发体验。',
+        summary: 'Next.js 14 带来了许多令人兴奋的新特性，包括改进的 App Router、更好的性能优化和增强的开发体验。',
         content: '# Next.js 14 新特性详解\n\nNext.js 14 是一个重要的版本更新...',
         coverImage: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&h=400&fit=crop',
         publishedAt: '2024-01-15',
         updatedAt: '2024-01-15',
-        readTime: 8,
-        views: 1250,
-        likes: 89,
+        createdAt: '2024-01-15',
+        viewCount: 1250,
+        likeCount: 89,
+        commentCount: 12,
         category: {
             id: '1', name: '前端开发', slug: 'frontend', description: '前端技术相关文章',
             color: "",
@@ -73,26 +75,22 @@ const recentArticles: Article[] = [
                 createdAt: ""
             },
         ],
-        author: {
-            name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-            id: '0'
-        },
         isPinned: true,
-        comments: [],
-        isPublished: false
+        isPublished: true
     },
     {
-        id: '2',
+        id: 2,
         title: 'React 18 并发特性深度解析',
         slug: 'react-18-concurrent',
-        excerpt: 'React 18 引入了并发特性，包括自动批处理、Suspense 改进和新的并发渲染器。',
+        summary: 'React 18 引入了并发特性，包括自动批处理、Suspense 改进和新的并发渲染器。',
         content: '# React 18 并发特性深度解析\n\nReact 18 是一个里程碑版本...',
         coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop',
         publishedAt: '2024-01-10',
         updatedAt: '2024-01-10',
-        readTime: 12,
-        views: 980,
-        likes: 67,
+        createdAt: '2024-01-10',
+        viewCount: 980,
+        likeCount: 67,
+        commentCount: 8,
         category: {
             id: '1', name: '前端开发', slug: 'frontend', description: '前端技术相关文章',
             color: "",
@@ -111,27 +109,22 @@ const recentArticles: Article[] = [
                 createdAt: ""
             },
         ],
-        author: {
-            name: '作者',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-            id: '0'
-        },
         isPinned: false,
-        comments: [],
-        isPublished: false
+        isPublished: true
     },
     {
-        id: '3',
+        id: 3,
         title: 'TypeScript 5.0 新特性介绍',
         slug: 'typescript-5-features',
-        excerpt: 'TypeScript 5.0 带来了装饰器支持、性能改进和更好的类型推断。',
+        summary: 'TypeScript 5.0 带来了装饰器支持、性能改进和更好的类型推断。',
         content: '# TypeScript 5.0 新特性介绍\n\nTypeScript 5.0 是一个重要更新...',
         coverImage: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop',
         publishedAt: '2024-01-05',
         updatedAt: '2024-01-05',
-        readTime: 6,
-        views: 756,
-        likes: 45,
+        createdAt: '2024-01-05',
+        viewCount: 756,
+        likeCount: 45,
+        commentCount: 6,
         category: {
             id: '2', name: '编程语言', slug: 'programming', description: '编程语言相关文章',
             color: "",
@@ -150,14 +143,8 @@ const recentArticles: Article[] = [
                 createdAt: ""
             },
         ],
-        author: {
-            name: '作者',
-            avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-            id: '0'
-        },
         isPinned: true,
-        comments: [],
-        isPublished: false
+        isPublished: true
     },
 ];
 
@@ -257,6 +244,7 @@ const author = {
 };
 
 export default function Home() {
+    const { config } = useSystemConfig();
     const [articles, setArticles] = useState<Article[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [tags, setTags] = useState<Tag[]>([]);
@@ -278,25 +266,38 @@ export default function Home() {
                 setError(null);
 
                 // 并行获取数据
-                const [articlesResponse, categoriesResponse, tagsResponse] = await Promise.all([
+                const [articlesResponse, categoriesResponse, tagsResponse, statsResponse] = await Promise.all([
                     articleApiService.getLatestArticles(6),
                     categoryApiService.getAllCategories(),
                     tagApiService.getAllTags(),
+                    publicApiService.getBlogStats(),
                 ]);
 
                 setArticles(articlesResponse);
-                setCategories(categoriesResponse);
-                setTags(tagsResponse);
+                setCategories(categoriesResponse.data || []);
+                setTags(tagsResponse.data || []);
 
-                // 计算博客统计
-                setBlogStats({
-                    totalArticles: articlesResponse.length,
-                    totalViews: articlesResponse.reduce((sum, article) => sum + article.views, 0),
-                    totalLikes: articlesResponse.reduce((sum, article) => sum + article.likes, 0),
-                    totalComments: articlesResponse.reduce((sum, article) => sum + article.comments.length, 0),
-                    totalCategories: categoriesResponse.length,
-                    totalTags: tagsResponse.length,
-                });
+                // 使用API返回的博客统计
+                if (statsResponse.code === 200 && statsResponse.data) {
+                    setBlogStats({
+                        totalArticles: statsResponse.data.totalArticles,
+                        totalViews: statsResponse.data.totalViews,
+                        totalLikes: statsResponse.data.totalLikes,
+                        totalComments: statsResponse.data.totalComments,
+                        totalCategories: statsResponse.data.totalCategories,
+                        totalTags: statsResponse.data.totalTags,
+                    });
+                } else {
+                    // 如果API失败，使用本地计算
+                    setBlogStats({
+                        totalArticles: articlesResponse.length,
+                        totalViews: articlesResponse.reduce((sum, article) => sum + article.viewCount, 0),
+                        totalLikes: articlesResponse.reduce((sum, article) => sum + article.likeCount, 0),
+                        totalComments: articlesResponse.reduce((sum, article) => sum + article.commentCount, 0),
+                        totalCategories: (categoriesResponse.data || []).length,
+                        totalTags: (tagsResponse.data || []).length,
+                    });
+                }
             } catch (err) {
                 console.error('获取数据失败:', err);
                 setError('获取数据失败，请稍后重试');
@@ -345,7 +346,7 @@ export default function Home() {
             <div className="min-h-screen bg-background">
                 {/* 轮播图区域 */}
                 <section className="mb-12">
-                    <Carousel items={carouselItems}/>
+                    <Carousel items={defaultCarouselItems}/>
                 </section>
 
                 <div className="container mx-auto px-4">
@@ -376,7 +377,9 @@ export default function Home() {
                                             if (a.isPinned && !b.isPinned) return -1;
                                             if (!a.isPinned && b.isPinned) return 1;
                                             // 同级别按发布时间排序
-                                            return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+                                            const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+                                            const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+                                            return dateB - dateA;
                                         })
                                         .map((article) => (
                                             <ArticleCard key={article.id} article={article}/>
@@ -390,7 +393,20 @@ export default function Home() {
                             {/* 作者信息 */}
                             <section>
                                 <h3 className="text-xl font-bold mb-4 text-foreground">关于作者</h3>
-                                <AuthorCard author={author}/>
+                                <AuthorCard author={{
+                                    name: config.bloggerName,
+                                    bio: config.bloggerBio,
+                                    avatar: config.bloggerAvatar,
+                                    website: config.siteUrl,
+                                    github: config.githubUrl,
+                                    twitter: config.twitterUrl,
+                                    email: config.adminEmail,
+                                    stats: {
+                                        articles: blogStats.totalArticles,
+                                        views: blogStats.totalViews,
+                                        likes: blogStats.totalLikes,
+                                    },
+                                }}/>
                             </section>
 
                             {/* 分类 */}

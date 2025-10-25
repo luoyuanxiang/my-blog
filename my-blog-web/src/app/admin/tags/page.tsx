@@ -1,45 +1,66 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Plus, 
   Search, 
   Edit, 
   Trash2, 
-  Tag as TagIcon
+  Tag as TagIcon,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { EditModal } from '@/components/ui/edit-modal';
-
-// 模拟标签数据
-const initialTags = [
-  { id: 1, name: 'React', slug: 'react', color: '#61dafb', articleCount: 12, createdAt: '2024-01-01' },
-  { id: 2, name: 'Next.js', slug: 'nextjs', color: '#000000', articleCount: 8, createdAt: '2024-01-01' },
-  { id: 3, name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 10, createdAt: '2024-01-01' },
-  { id: 4, name: 'JavaScript', slug: 'javascript', color: '#f7df1e', articleCount: 15, createdAt: '2024-01-01' },
-  { id: 5, name: 'Node.js', slug: 'nodejs', color: '#339933', articleCount: 6, createdAt: '2024-01-01' },
-  { id: 6, name: 'CSS', slug: 'css', color: '#1572b6', articleCount: 9, createdAt: '2024-01-01' },
-];
-
-interface Tag {
-  id: number;
-  name: string;
-  slug: string;
-  color: string;
-  articleCount: number;
-  createdAt: string;
-}
+import { Pagination, usePagination } from '@/components/ui/pagination';
+import { tagApiService } from '@/lib/api/tags';
+import type { Tag } from '@/types';
 
 export default function TagsManagement() {
-  const [tags, setTags] = useState<Tag[]>(initialTags);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingTag, setDeletingTag] = useState<Tag | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // 获取标签列表
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        setIsLoading(true);
+        setError('');
+        const response = await tagApiService.getAllTags();
+        if (response.code === 200) {
+          setTags(response.data);
+        } else {
+          setError('获取标签列表失败');
+        }
+      } catch (err: any) {
+        setError(err.message || '获取标签列表失败');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTags();
+  }, []);
 
   const filteredTags = tags.filter(tag =>
     tag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tag.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // 分页功能
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    currentItems,
+    goToPage,
+  } = usePagination(filteredTags, 10);
 
   const handleAddTag = () => {
     setEditingTag(null);
@@ -51,30 +72,37 @@ export default function TagsManagement() {
     setShowModal(true);
   };
 
-  const handleSubmitTag = (data: { name: string; slug: string; description: string; color: string }) => {
-    if (editingTag) {
-      // 更新标签
-      setTags(tags.map(tag =>
-        tag.id === editingTag.id
-          ? {
-              ...tag,
-              name: data.name,
-              slug: data.slug,
-              color: data.color,
-            }
-          : tag
-      ));
-    } else {
-      // 添加新标签
-      const newTag: Tag = {
-        id: Date.now(),
-        name: data.name,
-        slug: data.slug,
-        color: data.color,
-        articleCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-      setTags([...tags, newTag]);
+  const handleSubmitTag = async (data: { name: string; slug: string; description: string; color: string }) => {
+    try {
+      if (editingTag) {
+        // 更新标签
+        const response = await tagApiService.updateTag(editingTag.id, {
+          name: data.name,
+          slug: data.slug,
+          color: data.color
+        });
+        if (response.code === 200) {
+          setTags(prev => prev.map(tag => 
+            tag.id === editingTag.id ? response.data : tag
+          ));
+        }
+      } else {
+        // 添加新标签
+        const response = await tagApiService.createTag({
+          name: data.name,
+          slug: data.slug,
+          color: data.color,
+          articleCount: 0
+        });
+        if (response.code === 200) {
+          setTags(prev => [...prev, response.data]);
+        }
+      }
+      setShowModal(false);
+      setEditingTag(null);
+    } catch (err: any) {
+      console.error('保存标签失败:', err);
+      setError(err.message || '保存标签失败');
     }
   };
 
@@ -83,10 +111,30 @@ export default function TagsManagement() {
     setEditingTag(null);
   };
 
-  const handleDeleteTag = (id: number) => {
-    if (confirm('确定要删除这个标签吗？')) {
-      setTags(tags.filter(tag => tag.id !== id));
+  const handleDeleteTag = (tag: Tag) => {
+    setDeletingTag(tag);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteTag = async () => {
+    if (!deletingTag) return;
+    
+    try {
+      const response = await tagApiService.deleteTag(deletingTag.id);
+      if (response.code === 200) {
+        setTags(prev => prev.filter(tag => tag.id !== deletingTag.id));
+        setShowDeleteModal(false);
+        setDeletingTag(null);
+      }
+    } catch (err: any) {
+      console.error('删除标签失败:', err);
+      setError(err.message || '删除标签失败');
     }
+  };
+
+  const cancelDeleteTag = () => {
+    setShowDeleteModal(false);
+    setDeletingTag(null);
   };
 
   return (
@@ -108,7 +156,23 @@ export default function TagsManagement() {
         </motion.button>
       </div>
 
-      {/* 搜索栏 */}
+      {/* 错误提示 */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-2">
+          <AlertCircle className="w-5 h-5 text-red-500" />
+          <span className="text-red-700">{error}</span>
+        </div>
+      )}
+
+      {/* 加载状态 */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <span className="ml-2 text-gray-600">加载中...</span>
+        </div>
+      ) : (
+        <>
+          {/* 搜索栏 */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
         <input
@@ -127,13 +191,13 @@ export default function TagsManagement() {
           <h3 className="text-lg font-semibold text-gray-900">标签列表</h3>
         </div>
         <div className="divide-y divide-gray-200">
-          {filteredTags.length === 0 ? (
+          {currentItems.length === 0 ? (
             <div className="p-8 text-center">
               <TagIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">没有找到标签</p>
             </div>
           ) : (
-            filteredTags.map((tag) => (
+            currentItems.map((tag) => (
               <motion.div
                 key={tag.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -162,7 +226,7 @@ export default function TagsManagement() {
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteTag(tag.id)}
+                      onClick={() => handleDeleteTag(tag)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -173,7 +237,22 @@ export default function TagsManagement() {
             ))
           )}
         </div>
+        
+        {/* 分页组件 */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={10}
+              onPageChange={goToPage}
+            />
+          </div>
+        )}
       </div>
+        </>
+      )}
 
       {/* 编辑弹窗 */}
       <EditModal
@@ -190,6 +269,57 @@ export default function TagsManagement() {
         } : undefined}
         title={editingTag ? '编辑标签' : '添加标签'}
       />
+
+      {/* 删除确认对话框 */}
+      {showDeleteModal && deletingTag && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">删除标签</h3>
+                <p className="text-sm text-gray-500">此操作不可撤销</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700 mb-2">
+                确定要删除标签 <span className="font-semibold text-blue-600">"{deletingTag.name}"</span> 吗？
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium">删除后影响：</p>
+                    <ul className="mt-1 space-y-1">
+                      <li>• 该标签将从所有文章中移除</li>
+                      <li>• 相关文章将失去此标签分类</li>
+                      <li>• 此操作无法撤销</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={cancelDeleteTag}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmDeleteTag}
+                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors"
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

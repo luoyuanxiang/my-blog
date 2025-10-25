@@ -11,4 +11,6 @@ export { commentApiService } from './comments';
 export { friendLinkApiService } from './friend-links';
 export { guestbookApiService } from './guestbook';
 export { systemSettingApiService } from './system-settings';
+export { publicApiService } from './public';
+export { urlMetadataApiService } from './url-metadata';
 

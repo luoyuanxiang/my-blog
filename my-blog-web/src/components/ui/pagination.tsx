@@ -1,136 +1,198 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
   onPageChange: (page: number) => void;
-  showPrevNext?: boolean;
-  showFirstLast?: boolean;
-  maxVisiblePages?: number;
+  showInfo?: boolean;
+  className?: string;
 }
 
 export function Pagination({
   currentPage,
   totalPages,
+  totalItems,
+  itemsPerPage,
   onPageChange,
-  showPrevNext = true,
-  showFirstLast = false,
-  maxVisiblePages = 5
-}: Readonly<PaginationProps>) {
-  if (totalPages <= 1) return null;
-
+  showInfo = true,
+  className = ''
+}: PaginationProps) {
+  // 计算显示的页码范围
   const getVisiblePages = () => {
-    const pages: (number | string)[] = [];
-    const halfVisible = Math.floor(maxVisiblePages / 2);
-    
-    let startPage = Math.max(1, currentPage - halfVisible);
-    let endPage = Math.min(totalPages, currentPage + halfVisible);
-    
-    // 调整范围以确保显示足够的页码
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      if (startPage === 1) {
-        endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-      } else {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-      }
+    const delta = 2; // 当前页前后显示的页数
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i);
     }
-    
-    // 添加第一页和省略号
-    if (showFirstLast && startPage > 1) {
-      pages.push(1);
-      if (startPage > 2) {
-        pages.push('...');
-      }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
     }
-    
-    // 添加可见页码
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
     }
-    
-    // 添加省略号和最后一页
-    if (showFirstLast && endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        pages.push('...');
-      }
-      pages.push(totalPages);
-    }
-    
-    return pages;
+
+    return rangeWithDots;
   };
 
   const visiblePages = getVisiblePages();
 
+  // 计算显示信息
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  if (totalPages <= 1) {
+    return showInfo ? (
+      <div className={`flex items-center justify-between text-sm text-gray-600 ${className}`}>
+        <span>共 {totalItems} 条记录</span>
+      </div>
+    ) : null;
+  }
+
   return (
-    <div className="flex items-center justify-center space-x-2">
-      {/* 上一页按钮 */}
-      {showPrevNext && (
+    <div className={`flex items-center justify-between ${className}`}>
+      {/* 显示信息 */}
+      {showInfo && (
+        <div className="text-sm text-gray-600">
+          显示第 {startItem} - {endItem} 条，共 {totalItems} 条记录
+        </div>
+      )}
+
+      {/* 分页按钮 */}
+      <div className="flex items-center space-x-1">
+        {/* 上一页 */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={cn(
-            'flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+          className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
             currentPage === 1
-              ? 'text-muted-foreground cursor-not-allowed'
-              : 'text-foreground hover:bg-muted'
-          )}
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+          }`}
         >
-          <ChevronLeft className="h-4 w-4" />
-          <span>上一页</span>
+          <ChevronLeft className="w-4 h-4 mr-1" />
+          上一页
         </motion.button>
-      )}
 
-      {/* 页码按钮 */}
-      <div className="flex items-center space-x-1">
-        {visiblePages.map((page, index) => (
-          <div key={index}>
-            {page === '...' ? (
-              <div className="px-3 py-2 text-muted-foreground">
-                <MoreHorizontal className="h-4 w-4" />
-              </div>
-            ) : (
+        {/* 页码按钮 */}
+        <div className="flex items-center space-x-1">
+          {visiblePages.map((page, index) => {
+            if (page === '...') {
+              return (
+                <span key={`dots-${index}`} className="px-3 py-2 text-gray-400">
+                  <MoreHorizontal className="w-4 h-4" />
+                </span>
+              );
+            }
+
+            const pageNumber = page as number;
+            const isCurrentPage = pageNumber === currentPage;
+
+            return (
               <motion.button
+                key={pageNumber}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => onPageChange(page as number)}
-                className={cn(
-                  'px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                  currentPage === page
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                )}
+                onClick={() => onPageChange(pageNumber)}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  isCurrentPage
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
               >
-                {page}
+                {pageNumber}
               </motion.button>
-            )}
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* 下一页按钮 */}
-      {showPrevNext && (
+        {/* 下一页 */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={cn(
-            'flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+          className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
             currentPage === totalPages
-              ? 'text-muted-foreground cursor-not-allowed'
-              : 'text-foreground hover:bg-muted'
-          )}
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+          }`}
         >
-          <span>下一页</span>
-          <ChevronRight className="h-4 w-4" />
+          下一页
+          <ChevronRight className="w-4 h-4 ml-1" />
         </motion.button>
-      )}
+      </div>
     </div>
   );
+}
+
+// 分页Hook
+export function usePagination<T>(
+  items: T[],
+  itemsPerPage: number = 10
+) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalItems = items.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  // 计算当前页显示的数据
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = items.slice(startIndex, endIndex);
+
+  // 重置到第一页当数据变化时
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalItems, currentPage, totalPages]);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  return {
+    currentPage,
+    totalPages,
+    totalItems,
+    currentItems,
+    itemsPerPage,
+    goToPage,
+    goToNextPage,
+    goToPreviousPage,
+    hasNextPage: currentPage < totalPages,
+    hasPreviousPage: currentPage > 1,
+  };
 }

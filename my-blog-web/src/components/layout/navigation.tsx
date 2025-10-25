@@ -8,6 +8,7 @@ import { Menu, X, Search, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { SearchModal } from '@/components/ui/search-modal';
+import { useSystemConfig } from '@/lib/hooks/use-system-config';
 
 const navigation = [
   { name: '首页', href: '/' },
@@ -24,6 +25,7 @@ export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { config } = useSystemConfig();
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -33,19 +35,44 @@ export function Navigation() {
     setIsSearchOpen(true);
   };
 
+  // 根据系统配置过滤导航菜单
+  const filteredNavigation = navigation.filter(item => {
+    switch (item.name) {
+      case '友链':
+        return config.enableFriendLinks;
+      case '留言板':
+        return config.enableGuestbook;
+      default:
+        return true;
+    }
+  });
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600" />
-            <span className="text-xl font-bold">我的博客</span>
+            {config.logo ? (
+              <img 
+                src={config.logo} 
+                alt={config.siteName}
+                className="h-8 w-8 rounded-lg object-cover"
+              />
+            ) : (
+              <div 
+                className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600"
+                style={{ 
+                  background: `linear-gradient(135deg, ${config.primaryColor}, ${config.primaryColor}dd)`
+                }}
+              />
+            )}
+            <span className="text-xl font-bold">{config.siteName}</span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navigation.map((item) => (
+            {filteredNavigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -71,12 +98,14 @@ export function Navigation() {
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
             {/* Search Button */}
-            <button 
-              onClick={openSearch}
-              className="p-2 text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Search className="h-5 w-5" />
-            </button>
+            {config.enableSearch && (
+              <button 
+                onClick={openSearch}
+                className="p-2 text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+            )}
 
             {/* Theme Toggle */}
             <button
@@ -129,7 +158,7 @@ export function Navigation() {
               className="md:hidden border-t"
             >
               <div className="py-4 space-y-2">
-                {navigation.map((item) => (
+                {filteredNavigation.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
@@ -151,10 +180,12 @@ export function Navigation() {
       </div>
       
       {/* Search Modal */}
-      <SearchModal 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
-      />
+      {config.enableSearch && (
+        <SearchModal 
+          isOpen={isSearchOpen} 
+          onClose={() => setIsSearchOpen(false)} 
+        />
+      )}
     </nav>
   );
 }

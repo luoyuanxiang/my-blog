@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,4 +70,31 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
      */
     @Query("SELECT a FROM Article a WHERE YEAR(a.publishedAt) = :year AND MONTH(a.publishedAt) = :month AND a.isPublished = true ORDER BY a.publishedAt DESC")
     List<Article> findByYearAndMonth(@Param("year") int year, @Param("month") int month);
+
+    /**
+     * 统计已发布文章数量
+     */
+    long countByIsPublished(Boolean isPublished);
+
+    /**
+     * 统计置顶文章数量
+     */
+    long countByIsPinned(Boolean isPinned);
+
+    /**
+     * 统计总浏览量
+     */
+    @Query("SELECT COALESCE(SUM(a.viewCount), 0) FROM Article a")
+    Long sumViewCount();
+
+    /**
+     * 统计总点赞数
+     */
+    @Query("SELECT COALESCE(SUM(a.likeCount), 0) FROM Article a")
+    Long sumLikeCount();
+
+    /**
+     * 统计指定时间范围内的文章数量
+     */
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

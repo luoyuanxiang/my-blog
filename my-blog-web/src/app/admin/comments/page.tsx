@@ -1,103 +1,55 @@
 'use client';
 
-import {useRef, useState} from 'react';
+import {useRef, useState, useEffect} from 'react';
 import {motion} from 'framer-motion';
-import {Check, MessageSquare, Reply, Search, Trash2, User, X} from 'lucide-react';
+import {Check, MessageSquare, Reply, Search, Trash2, User, X, AlertCircle} from 'lucide-react';
+import { Pagination, usePagination } from '@/components/ui/pagination';
+import { commentApiService } from '@/lib/api/comments';
+import type { Comment } from '@/types';
 
-// 模拟评论数据
-const initialComments: Comment[] = [
-    {
-        id: 1,
-        content: '这篇文章写得很好，学到了很多新知识！',
-        author: '张三',
-        email: 'zhangsan@example.com',
-        website: 'https://zhangsan.com',
-        articleTitle: 'Next.js 14 新特性详解',
-        articleId: 1,
-        createdAt: '2024-01-15T10:30:00Z',
-        isApproved: true,
-        likes: 5,
-        replies: [
-            {
-                id: 2,
-                content: '同感！作者的技术水平很高。',
-                author: '李四',
-                email: 'lisi@example.com',
-                createdAt: '2024-01-15T11:00:00Z',
-                isApproved: true,
-                likes: 2,
-                articleTitle: "",
-                articleId: 0,
-                replies: []
-            }
-        ]
-    },
-    {
-        id: 3,
-        content: '感谢分享，期待更多这样的好文章！',
-        author: '王五',
-        email: 'wangwu@example.com',
-        articleTitle: 'React 18 并发特性深度解析',
-        articleId: 2,
-        createdAt: '2024-01-15T14:20:00Z',
-        isApproved: false,
-        likes: 3,
-        replies: []
-    },
-    {
-        id: 4,
-        content: '请问博主，关于 React 18 的并发特性，有什么推荐的深入学习资源吗？',
-        author: '赵六',
-        email: 'zhaoliu@example.com',
-        website: 'https://zhaoliu.dev',
-        articleTitle: 'React 18 并发特性深度解析',
-        articleId: 2,
-        createdAt: '2024-01-13T09:15:00Z',
-        isApproved: true,
-        likes: 1,
-        replies: [
-            {
-                id: 5,
-                content: '推荐看看 React 官方文档和 Dan Abramov 的博客，里面有很多深入的内容。',
-                author: '博主',
-                email: 'admin@example.com',
-                createdAt: '2024-01-13T10:30:00Z',
-                isApproved: true,
-                likes: 4,
-                articleTitle: "",
-                articleId: 0,
-                replies: []
-            }
-        ]
-    }
-];
-
-interface Comment {
-    id: number;
-    content: string;
-    author: string;
-    email: string;
-    website?: string;
-    articleTitle: string;
-    articleId: number;
-    createdAt: string;
-    isApproved: boolean;
-    likes: number;
-    replies: Comment[];
-}
 
 export default function CommentsManagement() {
-    const [comments, setComments] = useState<Comment[]>(initialComments);
+    const [comments, setComments] = useState<Comment[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'approved' | 'pending'>('all');
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
     const [replyContent, setReplyContent] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletingComment, setDeletingComment] = useState<Comment | null>(null);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectingComment, setRejectingComment] = useState<Comment | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
     const idCounterRef = useRef(1000); // 用于生成唯一 ID
+
+    // 获取评论列表
+    useEffect(() => {
+        const fetchComments = async () => {
+            try {
+                setIsLoading(true);
+                setError('');
+                const response = await commentApiService.getAllComments(0, 1000);
+                if (response.code === 200 && response.data && Array.isArray(response.data.content)) {
+                    setComments(response.data.content);
+                } else {
+                    setError('获取评论列表失败');
+                    setComments([]);
+                }
+            } catch (err: any) {
+                setError(err.message || '获取评论列表失败');
+                setComments([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchComments();
+    }, []);
 
     const filteredComments = comments.filter(comment => {
         const matchesSearch = comment.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
             comment.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            comment.articleTitle.toLowerCase().includes(searchTerm.toLowerCase());
+            comment.email.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesStatus = filterStatus === 'all' ||
             (filterStatus === 'approved' && comment.isApproved) ||
@@ -106,24 +58,79 @@ export default function CommentsManagement() {
         return matchesSearch && matchesStatus;
     });
 
-    const handleApprove = (id: number) => {
-        setComments(comments.map(comment =>
-            comment.id === id
-                ? {...comment, isApproved: true}
-                : comment
-        ));
-    };
+    // 分页功能
+    const {
+        currentPage,
+        totalPages,
+        totalItems,
+        currentItems,
+        goToPage,
+    } = usePagination(filteredComments, 5);
 
-    const handleReject = (id: number) => {
-        if (confirm('确定要拒绝这个评论吗？')) {
-            setComments(comments.filter(comment => comment.id !== id));
+    const handleApprove = async (comment: Comment) => {
+        try {
+            const response = await commentApiService.approveComment(comment.id);
+            if (response.code === 200) {
+                setComments(comments.map(c =>
+                    c.id === comment.id ? response.data : c
+                ));
+            }
+        } catch (err: any) {
+            console.error('审核通过失败:', err);
+            setError(err.message || '审核通过失败');
         }
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('确定要删除这个评论吗？')) {
-            setComments(comments.filter(comment => comment.id !== id));
+    const handleReject = (comment: Comment) => {
+        setRejectingComment(comment);
+        setShowRejectModal(true);
+    };
+
+    const confirmReject = async () => {
+        if (!rejectingComment) return;
+        
+        try {
+            const response = await commentApiService.rejectComment(rejectingComment.id);
+            if (response.code === 200) {
+                setComments(comments.filter(comment => comment.id !== rejectingComment.id));
+                setShowRejectModal(false);
+                setRejectingComment(null);
+            }
+        } catch (err: any) {
+            console.error('拒绝评论失败:', err);
+            setError(err.message || '拒绝评论失败');
         }
+    };
+
+    const cancelReject = () => {
+        setShowRejectModal(false);
+        setRejectingComment(null);
+    };
+
+    const handleDelete = (comment: Comment) => {
+        setDeletingComment(comment);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingComment) return;
+        
+        try {
+            const response = await commentApiService.deleteComment(deletingComment.id);
+            if (response.code === 200) {
+                setComments(comments.filter(comment => comment.id !== deletingComment.id));
+                setShowDeleteModal(false);
+                setDeletingComment(null);
+            }
+        } catch (err: any) {
+            console.error('删除评论失败:', err);
+            setError(err.message || '删除评论失败');
+        }
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteModal(false);
+        setDeletingComment(null);
     };
 
     const handleReply = (commentId: number) => {
@@ -137,17 +144,17 @@ export default function CommentsManagement() {
             content: replyContent,
             author: '博主',
             email: 'admin@example.com',
-            articleTitle: comments.find(c => c.id === commentId)?.articleTitle || '',
             articleId: comments.find(c => c.id === commentId)?.articleId || 0,
             createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             isApproved: true,
-            likes: 0,
+            likeCount: 0,
             replies: []
         };
 
         setComments(comments.map(comment =>
             comment.id === commentId
-                ? {...comment, replies: [...comment.replies, newReply]}
+                ? {...comment, replies: [...(comment.replies || []), newReply]}
                 : comment
         ));
 
@@ -158,6 +165,28 @@ export default function CommentsManagement() {
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleString('zh-CN');
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">加载中...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center">
+                    <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                    <p className="text-red-800">{error}</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -219,13 +248,13 @@ export default function CommentsManagement() {
                     <h3 className="text-lg font-semibold text-gray-900">评论列表</h3>
                 </div>
                 <div className="divide-y divide-gray-200">
-                    {filteredComments.length === 0 ? (
+                    {currentItems.length === 0 ? (
                         <div className="p-8 text-center">
                             <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4"/>
                             <p className="text-gray-500">没有找到评论</p>
                         </div>
                     ) : (
-                        filteredComments.map((comment) => (
+                        currentItems.map((comment) => (
                             <motion.div
                                 key={comment.id}
                                 initial={{opacity: 0, y: 20}}
@@ -264,7 +293,7 @@ export default function CommentsManagement() {
                                                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                                                     <span>{comment.email}</span>
                                                     <span>{formatDate(comment.createdAt)}</span>
-                                                    <span>文章: {comment.articleTitle}</span>
+                                                    <span>文章ID: {comment.articleId}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -275,7 +304,7 @@ export default function CommentsManagement() {
                                         </div>
 
                                         {/* 回复区域 */}
-                                        {comment.replies.length > 0 && (
+                                        {comment.replies && comment.replies.length > 0 && (
                                             <div className="ml-11 mb-4">
                                                 <h5 className="text-sm font-medium text-gray-700 mb-2">回复
                                                     ({comment.replies.length})</h5>
@@ -377,14 +406,14 @@ export default function CommentsManagement() {
                                         {!comment.isApproved && (
                                             <>
                                                 <button
-                                                    onClick={() => handleApprove(comment.id)}
+                                                    onClick={() => handleApprove(comment)}
                                                     className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                                                     title="审核通过"
                                                 >
                                                     <Check className="h-4 w-4"/>
                                                 </button>
                                                 <button
-                                                    onClick={() => handleReject(comment.id)}
+                                                    onClick={() => handleReject(comment)}
                                                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="拒绝"
                                                 >
@@ -400,7 +429,7 @@ export default function CommentsManagement() {
                                             <Reply className="h-4 w-4"/>
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(comment.id)}
+                                            onClick={() => handleDelete(comment)}
                                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                             title="删除"
                                         >
@@ -412,7 +441,126 @@ export default function CommentsManagement() {
                         ))
                     )}
                 </div>
+                
+                {/* 分页组件 */}
+                {totalPages > 1 && (
+                    <div className="px-6 py-4 border-t border-gray-200">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={totalItems}
+                            itemsPerPage={5}
+                            onPageChange={goToPage}
+                        />
+                    </div>
+                )}
             </div>
+
+            {/* 拒绝确认对话框 */}
+            {showRejectModal && rejectingComment && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+                        <div className="p-6">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                    <X className="w-5 h-5 text-red-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">拒绝评论</h3>
+                                    <p className="text-sm text-gray-600">此操作将永久删除该评论</p>
+                                </div>
+                            </div>
+                            
+                            <div className="mb-6">
+                                <p className="text-gray-700 mb-2">
+                                    确定要拒绝评论 <span className="font-semibold text-red-600">"{rejectingComment.author}"</span> 的评论吗？
+                                </p>
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <div className="flex items-start space-x-2">
+                                        <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                        <div className="text-sm text-yellow-800">
+                                            <p className="font-medium">拒绝后影响：</p>
+                                            <ul className="mt-1 space-y-1">
+                                                <li>• 该评论将被永久删除</li>
+                                                <li>• 评论者将无法看到此评论</li>
+                                                <li>• 此操作无法撤销</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-end space-x-3">
+                                <button
+                                    onClick={cancelReject}
+                                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    onClick={confirmReject}
+                                    className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors"
+                                >
+                                    确认拒绝
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 删除确认对话框 */}
+            {showDeleteModal && deletingComment && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+                        <div className="p-6">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                    <Trash2 className="w-5 h-5 text-red-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">删除评论</h3>
+                                    <p className="text-sm text-gray-600">此操作将永久删除该评论</p>
+                                </div>
+                            </div>
+                            
+                            <div className="mb-6">
+                                <p className="text-gray-700 mb-2">
+                                    确定要删除评论 <span className="font-semibold text-red-600">"{deletingComment.author}"</span> 的评论吗？
+                                </p>
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <div className="flex items-start space-x-2">
+                                        <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                        <div className="text-sm text-yellow-800">
+                                            <p className="font-medium">删除后影响：</p>
+                                            <ul className="mt-1 space-y-1">
+                                                <li>• 该评论将被永久删除</li>
+                                                <li>• 所有回复也将被删除</li>
+                                                <li>• 此操作无法撤销</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-end space-x-3">
+                                <button
+                                    onClick={cancelDelete}
+                                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors"
+                                >
+                                    确认删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

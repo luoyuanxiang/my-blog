@@ -182,5 +182,8 @@ class HttpClient {
 // 创建全局 HTTP 客户端实例
 export const httpClient = new HttpClient();
 
+// 导出 HttpClient 类
+export { HttpClient };
+
 // 导出类型
 export type { ApiError };

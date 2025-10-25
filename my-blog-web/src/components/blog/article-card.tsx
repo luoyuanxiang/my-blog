@@ -50,7 +50,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
         {/* 摘要 */}
         <p className="text-muted-foreground mb-4 line-clamp-3">
-          {article.excerpt}
+          {article.summary}
         </p>
 
         {/* 标签 */}
@@ -76,25 +76,21 @@ export function ArticleCard({ article }: ArticleCardProps) {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <User className="h-4 w-4" />
-              <span>{article.author.name}</span>
+              <span>博主</span>
             </div>
             <div className="flex items-center space-x-1">
               <Calendar className="h-4 w-4" />
-              <span>{formatDate(article.publishedAt)}</span>
+              <span>{formatDate(article.publishedAt || article.createdAt)}</span>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-1">
-              <Clock className="h-4 w-4" />
-              <span>{article.readTime}分钟</span>
-            </div>
-            <div className="flex items-center space-x-1">
               <Eye className="h-4 w-4" />
-              <span>{article.views}</span>
+              <span>{article.viewCount}</span>
             </div>
             <div className="flex items-center space-x-1">
               <Heart className="h-4 w-4" />
-              <span>{article.likes}</span>
+              <span>{article.likeCount}</span>
             </div>
           </div>
         </div>

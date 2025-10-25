@@ -35,8 +35,8 @@ export class AdminAuthApiService {
    * 获取当前管理员信息
    * @returns 管理员信息
    */
-  async getCurrentUser(): Promise<ApiResponse<any>> {
-    return httpClient.get<ApiResponse<any>>('/auth/me');
+  async getCurrentUser(): Promise<ApiResponse<LoginResponse>> {
+    return httpClient.get<ApiResponse<LoginResponse>>('/auth/me');
   }
 
   /**

@@ -1,160 +1,13 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArticleCard } from '@/components/blog/article-card';
 import { SearchBar } from '@/components/ui/search-bar';
 import { MainLayout } from '@/components/layout/main-layout';
-import type { ArchiveItem } from '@/types';
-
-// 模拟数据 - 实际项目中这些数据应该来自API
-const archiveData: ArchiveItem[] = [
-  {
-    year: 2024,
-    month: 1,
-    articles: [
-      {
-        id: '1',
-        title: 'Next.js 14 新特性详解',
-        slug: 'nextjs-14-features',
-        content: 'Next.js 14 带来了许多令人兴奋的新特性...',
-        excerpt: '探索 Next.js 14 的最新特性，包括 App Router 的改进、Server Components 的优化等',
-        coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=400&fit=crop',
-        publishedAt: '2024-01-15',
-        updatedAt: '2024-01-15',
-        readTime: 8,
-        views: 1250,
-        likes: 45,
-        category: { id: '1', name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
-        tags: [
-          { id: '1', name: 'Next.js', slug: 'nextjs', color: '#000000', articleCount: 15, createdAt: '2024-01-01' },
-          { id: '2', name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' }
-        ],
-        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-        comments: [],
-        isPublished: true
-      },
-      {
-        id: '2',
-        title: 'TypeScript 高级类型技巧',
-        slug: 'typescript-advanced-types',
-        content: 'TypeScript 的高级类型系统提供了强大的类型安全...',
-        excerpt: '学习 TypeScript 的高级类型技巧，提升代码质量和开发效率',
-        coverImage: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop',
-        publishedAt: '2024-01-10',
-        updatedAt: '2024-01-10',
-        readTime: 12,
-        views: 980,
-        likes: 32,
-        category: { id: '2', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
-        tags: [
-          { id: '3', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
-          { id: '4', name: 'JavaScript', slug: 'javascript', color: '#f7df1e', articleCount: 30, createdAt: '2024-01-01' }
-        ],
-        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-        comments: [],
-        isPublished: true
-      },
-      {
-        id: '3',
-        title: 'React 18 并发特性深度解析',
-        slug: 'react-18-concurrent-features',
-        content: 'React 18 引入了并发特性，改变了组件的渲染方式...',
-        excerpt: '深入了解 React 18 的并发特性，包括 Suspense、useTransition 等新 API',
-        coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop',
-        publishedAt: '2024-01-05',
-        updatedAt: '2024-01-05',
-        readTime: 15,
-        views: 2100,
-        likes: 78,
-        category: { id: '1', name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
-        tags: [
-          { id: '2', name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' },
-          { id: '5', name: '并发', slug: 'concurrent', color: '#8b5cf6', articleCount: 5, createdAt: '2024-01-01' }
-        ],
-        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-        comments: [],
-        isPublished: true
-      }
-    ]
-  },
-  {
-    year: 2023,
-    month: 12,
-    articles: [
-      {
-        id: '4',
-        title: 'Node.js 性能优化指南',
-        slug: 'nodejs-performance-optimization',
-        content: 'Node.js 性能优化是后端开发中的重要话题...',
-        excerpt: '学习 Node.js 性能优化的各种技巧和最佳实践，提升应用性能',
-        coverImage: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=800&h=400&fit=crop',
-        publishedAt: '2023-12-28',
-        updatedAt: '2023-12-28',
-        readTime: 12,
-        views: 980,
-        likes: 32,
-        category: { id: '2', name: '后端开发', slug: 'backend', color: '#10b981', articleCount: 18, createdAt: '2024-01-01' },
-        tags: [
-          { id: '6', name: 'Node.js', slug: 'nodejs', color: '#339933', articleCount: 12, createdAt: '2024-01-01' },
-          { id: '7', name: '性能优化', slug: 'performance', color: '#f59e0b', articleCount: 8, createdAt: '2024-01-01' }
-        ],
-        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-        comments: [],
-        isPublished: true
-      },
-      {
-        id: '5',
-        title: 'MongoDB 数据库设计最佳实践',
-        slug: 'mongodb-database-design',
-        content: 'MongoDB 作为 NoSQL 数据库，有其独特的设计模式...',
-        excerpt: '学习 MongoDB 数据库设计的最佳实践，提升数据存储效率',
-        coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop',
-        publishedAt: '2023-12-20',
-        updatedAt: '2023-12-20',
-        readTime: 10,
-        views: 750,
-        likes: 28,
-        category: { id: '3', name: '数据库', slug: 'database', color: '#f59e0b', articleCount: 12, createdAt: '2024-01-01' },
-        tags: [
-          { id: '8', name: 'MongoDB', slug: 'mongodb', color: '#47a248', articleCount: 8, createdAt: '2024-01-01' },
-          { id: '9', name: '数据库设计', slug: 'database-design', color: '#8b5cf6', articleCount: 6, createdAt: '2024-01-01' }
-        ],
-        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-        comments: [],
-        isPublished: true
-      }
-    ]
-  },
-  {
-    year: 2023,
-    month: 11,
-    articles: [
-      {
-        id: '6',
-        title: 'Docker 容器化部署实践',
-        slug: 'docker-containerization-practice',
-        content: 'Docker 容器化是现代应用部署的重要技术...',
-        excerpt: '学习 Docker 容器化部署的实践技巧，提升应用部署效率',
-        coverImage: 'https://images.unsplash.com/photo-1605745341112-85968b19335a?w=800&h=400&fit=crop',
-        publishedAt: '2023-11-15',
-        updatedAt: '2023-11-15',
-        readTime: 14,
-        views: 1100,
-        likes: 35,
-        category: { id: '4', name: 'DevOps', slug: 'devops', color: '#ef4444', articleCount: 8, createdAt: '2024-01-01' },
-        tags: [
-          { id: '10', name: 'Docker', slug: 'docker', color: '#2496ed', articleCount: 6, createdAt: '2024-01-01' },
-          { id: '11', name: '容器化', slug: 'containerization', color: '#06b6d4', articleCount: 4, createdAt: '2024-01-01' }
-        ],
-        author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-        comments: [],
-        isPublished: true
-      }
-    ]
-  }
-];
+import { articleApiService } from '@/lib/api/articles';
+import type { ArchiveItem, Article } from '@/types';
 
 const monthNames = [
   '一月', '二月', '三月', '四月', '五月', '六月',
@@ -249,8 +102,279 @@ function ArchiveMonth({ month }: ArchiveMonthProps) {
 }
 
 export default function ArchivePage() {
+  const [archiveData, setArchiveData] = useState<ArchiveItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // 获取归档数据
+  useEffect(() => {
+    const fetchArchiveData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 获取所有已发布的文章
+        const response = await articleApiService.getPublishedArticles(0, 1000);
+        
+        if (response.code === 200 && response.data && response.data.content) {
+          const articles = response.data.content;
+          
+          // 按年月分组文章
+          const groupedData = groupArticlesByMonth(articles);
+          setArchiveData(groupedData);
+        } else {
+          // 如果API失败，使用示例数据
+          const sampleArchiveData: ArchiveItem[] = [
+            {
+              year: 2024,
+              month: 1,
+              articles: [
+                {
+                  id: 1,
+                  title: 'Next.js 14 新特性详解',
+                  slug: 'nextjs-14-features',
+                  content: 'Next.js 14 带来了许多令人兴奋的新特性...',
+                  summary: '探索 Next.js 14 的最新特性，包括 App Router 的改进、Server Components 的优化等',
+                  coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=400&fit=crop',
+                  publishedAt: '2024-01-15',
+                  updatedAt: '2024-01-15',
+                  createdAt: '2024-01-15',
+                  viewCount: 1250,
+                  likeCount: 45,
+                  commentCount: 12,
+                  isPublished: true,
+                  isPinned: false,
+                  category: { id: '1', name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
+                  tags: [
+                    { id: '1', name: 'Next.js', slug: 'nextjs', color: '#000000', articleCount: 15, createdAt: '2024-01-01' },
+                    { id: '2', name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' }
+                  ]
+                },
+                {
+                  id: 2,
+                  title: 'TypeScript 高级类型技巧',
+                  slug: 'typescript-advanced-types',
+                  content: 'TypeScript 的高级类型系统提供了强大的类型安全...',
+                  summary: '学习 TypeScript 的高级类型技巧，提升代码质量和开发效率',
+                  coverImage: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop',
+                  publishedAt: '2024-01-10',
+                  updatedAt: '2024-01-10',
+                  createdAt: '2024-01-10',
+                  viewCount: 980,
+                  likeCount: 32,
+                  commentCount: 8,
+                  isPublished: true,
+                  isPinned: false,
+                  category: { id: '2', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
+                  tags: [
+                    { id: '3', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
+                    { id: '4', name: 'JavaScript', slug: 'javascript', color: '#f7df1e', articleCount: 30, createdAt: '2024-01-01' }
+                  ]
+                }
+              ]
+            },
+            {
+              year: 2023,
+              month: 12,
+              articles: [
+                {
+                  id: 3,
+                  title: 'Node.js 性能优化指南',
+                  slug: 'nodejs-performance-optimization',
+                  content: 'Node.js 性能优化是后端开发中的重要话题...',
+                  summary: '学习 Node.js 性能优化的各种技巧和最佳实践，提升应用性能',
+                  coverImage: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=800&h=400&fit=crop',
+                  publishedAt: '2023-12-28',
+                  updatedAt: '2023-12-28',
+                  createdAt: '2023-12-28',
+                  viewCount: 980,
+                  likeCount: 32,
+                  commentCount: 8,
+                  isPublished: true,
+                  isPinned: false,
+                  category: { id: '2', name: '后端开发', slug: 'backend', color: '#10b981', articleCount: 18, createdAt: '2024-01-01' },
+                  tags: [
+                    { id: '6', name: 'Node.js', slug: 'nodejs', color: '#339933', articleCount: 12, createdAt: '2024-01-01' },
+                    { id: '7', name: '性能优化', slug: 'performance', color: '#f59e0b', articleCount: 8, createdAt: '2024-01-01' }
+                  ]
+                }
+              ]
+            }
+          ];
+          setArchiveData(sampleArchiveData);
+        }
+      } catch (err: any) {
+        console.error('获取归档数据失败:', err);
+        setError(err.message || '获取归档数据失败');
+        
+        // 使用示例数据作为降级方案
+        const sampleArchiveData: ArchiveItem[] = [
+          {
+            year: 2024,
+            month: 1,
+            articles: [
+              {
+                id: 1,
+                title: 'Next.js 14 新特性详解',
+                slug: 'nextjs-14-features',
+                content: 'Next.js 14 带来了许多令人兴奋的新特性...',
+                summary: '探索 Next.js 14 的最新特性，包括 App Router 的改进、Server Components 的优化等',
+                coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=400&fit=crop',
+                publishedAt: '2024-01-15',
+                updatedAt: '2024-01-15',
+                createdAt: '2024-01-15',
+                viewCount: 1250,
+                likeCount: 45,
+                commentCount: 12,
+                isPublished: true,
+                isPinned: false,
+                category: { id: '1', name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
+                tags: [
+                  { id: '1', name: 'Next.js', slug: 'nextjs', color: '#000000', articleCount: 15, createdAt: '2024-01-01' },
+                  { id: '2', name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' }
+                ]
+              },
+              {
+                id: 2,
+                title: 'TypeScript 高级类型技巧',
+                slug: 'typescript-advanced-types',
+                content: 'TypeScript 的高级类型系统提供了强大的类型安全...',
+                summary: '学习 TypeScript 的高级类型技巧，提升代码质量和开发效率',
+                coverImage: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop',
+                publishedAt: '2024-01-10',
+                updatedAt: '2024-01-10',
+                createdAt: '2024-01-10',
+                viewCount: 980,
+                likeCount: 32,
+                commentCount: 8,
+                isPublished: true,
+                isPinned: false,
+                category: { id: '2', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
+                tags: [
+                  { id: '3', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
+                  { id: '4', name: 'JavaScript', slug: 'javascript', color: '#f7df1e', articleCount: 30, createdAt: '2024-01-01' }
+                ]
+              }
+            ]
+          },
+          {
+            year: 2023,
+            month: 12,
+            articles: [
+              {
+                id: 3,
+                title: 'Node.js 性能优化指南',
+                slug: 'nodejs-performance-optimization',
+                content: 'Node.js 性能优化是后端开发中的重要话题...',
+                summary: '学习 Node.js 性能优化的各种技巧和最佳实践，提升应用性能',
+                coverImage: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=800&h=400&fit=crop',
+                publishedAt: '2023-12-28',
+                updatedAt: '2023-12-28',
+                createdAt: '2023-12-28',
+                viewCount: 980,
+                likeCount: 32,
+                commentCount: 8,
+                isPublished: true,
+                isPinned: false,
+                category: { id: '2', name: '后端开发', slug: 'backend', color: '#10b981', articleCount: 18, createdAt: '2024-01-01' },
+                tags: [
+                  { id: '6', name: 'Node.js', slug: 'nodejs', color: '#339933', articleCount: 12, createdAt: '2024-01-01' },
+                  { id: '7', name: '性能优化', slug: 'performance', color: '#f59e0b', articleCount: 8, createdAt: '2024-01-01' }
+                ]
+              }
+            ]
+          }
+        ];
+        setArchiveData(sampleArchiveData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArchiveData();
+  }, []);
+
+  // 按年月分组文章的函数
+  const groupArticlesByMonth = (articles: Article[]): ArchiveItem[] => {
+    const grouped = new Map<string, Article[]>();
+    
+    articles.forEach(article => {
+      const publishDate = article.publishedAt || article.createdAt;
+      const date = new Date(publishDate);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // getMonth() 返回 0-11，需要 +1
+      const key = `${year}-${month}`;
+      
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(article);
+    });
+    
+    // 转换为 ArchiveItem 格式
+    const archiveItems: ArchiveItem[] = [];
+    grouped.forEach((articles, key) => {
+      const [year, month] = key.split('-').map(Number);
+      archiveItems.push({
+        year,
+        month,
+        articles: articles.sort((a, b) => {
+          const dateA = new Date(a.publishedAt || a.createdAt);
+          const dateB = new Date(b.publishedAt || b.createdAt);
+          return dateB.getTime() - dateA.getTime(); // 按时间倒序排列
+        })
+      });
+    });
+    
+    // 按年月排序
+    return archiveItems.sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year; // 年份倒序
+      }
+      return b.month - a.month; // 月份倒序
+    });
+  };
+
+  // 过滤归档数据
+  const filteredArchiveData = archiveData.map(item => ({
+    ...item,
+    articles: item.articles.filter(article =>
+      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      article.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      article.category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      article.tags.some(tag => tag.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+  })).filter(item => item.articles.length > 0);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">加载中...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-destructive text-lg mb-4">{error}</p>
+            <p className="text-muted-foreground">已显示示例数据</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   // 按年份分组
-  const groupedByYear = archiveData.reduce((acc, item) => {
+  const groupedByYear = filteredArchiveData.reduce((acc, item) => {
     if (!acc[item.year]) {
       acc[item.year] = [];
     }
@@ -277,7 +401,10 @@ export default function ArchivePage() {
         {/* 搜索栏 */}
         <div className="mb-8">
           <Suspense fallback={<div>加载中...</div>}>
-            <SearchBar placeholder="搜索归档文章..." />
+            <SearchBar 
+              placeholder="搜索归档文章..." 
+              onSearch={setSearchTerm}
+            />
           </Suspense>
         </div>
 
@@ -306,7 +433,7 @@ export default function ArchivePage() {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">
-                  {Math.max(...archiveData.map(item => item.articles.length))}
+                  {archiveData.length > 0 ? Math.max(...archiveData.map(item => item.articles.length)) : 0}
                 </div>
                 <div className="text-sm text-muted-foreground">单月最多</div>
               </div>
@@ -317,6 +444,7 @@ export default function ArchivePage() {
         {/* 时间线归档 */}
         <div>
           <h2 className="text-2xl font-bold mb-6">时间线</h2>
+          {sortedYears.length > 0 ? (
           <div className="space-y-8">
             {sortedYears.map((year) => (
               <ArchiveYear
@@ -326,6 +454,13 @@ export default function ArchivePage() {
               />
             ))}
           </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                {searchTerm ? '没有找到匹配的文章' : '暂无归档数据'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

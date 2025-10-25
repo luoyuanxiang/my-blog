@@ -63,6 +63,16 @@ public class AuthController {
         return ApiResponse.success("登录成功", response);
     }
 
+    @PostMapping("/auth/validate")
+    public ApiResponse<Void> validate(@RequestBody LoginResponse loginResponse) {
+        // 检查用户名是否已存在
+        String token = loginResponse.getToken();
+        if (Boolean.FALSE.equals(jwtUtil.validateToken(token, jwtUtil.getUsernameFromToken(token)))) {
+            return ApiResponse.error("令牌已过期");
+        }
+        return ApiResponse.success("令牌有效", null);
+    }
+
     @PostMapping("/logout")
     @Operation(summary = "用户登出", description = "用户登出")
     public ApiResponse<Void> logout() {

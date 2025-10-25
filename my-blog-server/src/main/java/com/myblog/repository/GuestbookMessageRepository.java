@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -39,4 +40,14 @@ public interface GuestbookMessageRepository extends JpaRepository<GuestbookMessa
      * 统计待审核留言数
      */
     long countByIsApprovedFalse();
+
+    /**
+     * 统计已审核留言数
+     */
+    long countByIsApproved(Boolean isApproved);
+
+    /**
+     * 统计指定时间范围内的留言数量
+     */
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

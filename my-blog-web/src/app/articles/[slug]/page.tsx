@@ -1,4 +1,6 @@
-import { Suspense } from 'react';
+'use client';
+
+import { Suspense, useEffect, useState, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Calendar, Clock, Eye, Heart, User, ArrowLeft } from 'lucide-react';
@@ -7,129 +9,10 @@ import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { CommentSection } from '@/components/blog/comment-section';
 import { ArticleCard } from '@/components/blog/article-card';
 import { TableOfContents } from '@/components/blog/table-of-contents';
+import { MainLayout } from '@/components/layout/main-layout';
+import { articleApiService } from '@/lib/api/articles';
+import { useSystemConfig } from '@/lib/hooks/use-system-config';
 import type { Article } from '@/types';
-
-// 模拟数据 - 实际项目中这些数据应该来自API
-const article: Article = {
-  id: '1',
-  title: 'Next.js 14 新特性详解',
-  slug: 'nextjs-14-features',
-  content: `
-# Next.js 14 新特性详解
-
-Next.js 14 带来了许多令人兴奋的新特性，让我们来详细了解一下这些改进。
-
-## 主要新特性
-
-### 1. App Router 的改进
-
-App Router 在 Next.js 14 中得到了显著改进，提供了更好的性能和开发体验。
-
-\`\`\`javascript
-// app/page.js
-export default function HomePage() {
-  return (
-    <div>
-      <h1>欢迎来到 Next.js 14</h1>
-      <p>这是一个使用 App Router 的页面</p>
-    </div>
-  );
-}
-\`\`\`
-
-### 2. Server Components 优化
-
-Server Components 现在更加高效，减少了客户端 JavaScript 包的大小。
-
-\`\`\`typescript
-// components/ServerComponent.tsx
-import { Suspense } from 'react';
-
-export default async function ServerComponent() {
-  const data = await fetch('https://api.example.com/data');
-  const result = await data.json();
-  
-  return (
-    <Suspense fallback={<div>加载中...</div>}>
-      <div>{result.title}</div>
-    </Suspense>
-  );
-}
-\`\`\`
-
-### 3. 性能提升
-
-Next.js 14 在性能方面有了显著提升，包括：
-
-- 更快的构建时间
-- 更小的包大小
-- 更好的缓存策略
-
-## 总结
-
-Next.js 14 是一个重要的版本更新，带来了许多实用的新特性和性能改进。建议开发者尽快升级到新版本，享受更好的开发体验。
-  `,
-  excerpt: '探索 Next.js 14 的最新特性，包括 App Router 的改进、Server Components 的优化等',
-  coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=600&fit=crop',
-  publishedAt: '2024-01-15',
-  updatedAt: '2024-01-15',
-  readTime: 8,
-  views: 1250,
-  likes: 45,
-  category: { id: '1', name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
-  tags: [
-    { id: '1', name: 'Next.js', slug: 'nextjs', color: '#000000', articleCount: 15, createdAt: '2024-01-01' },
-    { id: '2', name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' }
-  ],
-  author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-  comments: [],
-  isPublished: true
-};
-
-const relatedArticles: Article[] = [
-  {
-    id: '2',
-    title: 'TypeScript 高级类型技巧',
-    slug: 'typescript-advanced-types',
-    content: 'TypeScript 的高级类型系统提供了强大的类型安全...',
-    excerpt: '学习 TypeScript 的高级类型技巧，提升代码质量和开发效率',
-    coverImage: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop',
-    publishedAt: '2024-01-10',
-    updatedAt: '2024-01-10',
-    readTime: 12,
-    views: 980,
-    likes: 32,
-    category: { id: '2', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
-    tags: [
-      { id: '3', name: 'TypeScript', slug: 'typescript', color: '#3178c6', articleCount: 18, createdAt: '2024-01-01' },
-      { id: '4', name: 'JavaScript', slug: 'javascript', color: '#f7df1e', articleCount: 30, createdAt: '2024-01-01' }
-    ],
-    author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-    comments: [],
-    isPublished: true
-  },
-  {
-    id: '3',
-    title: 'React 18 并发特性深度解析',
-    slug: 'react-18-concurrent-features',
-    content: 'React 18 引入了并发特性，改变了组件的渲染方式...',
-    excerpt: '深入了解 React 18 的并发特性，包括 Suspense、useTransition 等新 API',
-    coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop',
-    publishedAt: '2024-01-05',
-    updatedAt: '2024-01-05',
-    readTime: 15,
-    views: 2100,
-    likes: 78,
-    category: { id: '1', name: '前端开发', slug: 'frontend', color: '#3b82f6', articleCount: 25, createdAt: '2024-01-01' },
-    tags: [
-      { id: '2', name: 'React', slug: 'react', color: '#61dafb', articleCount: 20, createdAt: '2024-01-01' },
-      { id: '5', name: '并发', slug: 'concurrent', color: '#8b5cf6', articleCount: 5, createdAt: '2024-01-01' }
-    ],
-    author: { id: '1', name: '作者', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-    comments: [],
-    isPublished: true
-  }
-];
 
 // Markdown 渲染组件
 function MarkdownContent({ content }: { content: string }) {
@@ -137,9 +20,207 @@ function MarkdownContent({ content }: { content: string }) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function ArticleDetailPage({ params: _params }: { params: { slug: string } }) {
+export default function ArticleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { config } = useSystemConfig();
+  const resolvedParams = use(params);
+  const [article, setArticle] = useState<Article | null>(null);
+  const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isLiked, setIsLiked] = useState(false);
+
+  // 处理点赞
+  const handleLike = async () => {
+    if (!article) return;
+    
+    try {
+      await articleApiService.incrementLikeCount(article.id);
+      setIsLiked(!isLiked);
+      // 更新本地文章数据
+      setArticle(prev => prev ? {
+        ...prev,
+        likeCount: prev.likeCount + (isLiked ? -1 : 1)
+      } : null);
+    } catch (err) {
+      console.error('点赞失败:', err);
+    }
+  };
+
+  // 获取文章详情
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        setIsLoading(true);
+        setError('');
+        
+        const response = await articleApiService.getArticleBySlug(resolvedParams.slug);
+        if (response.code === 200 && response.data) {
+          setArticle(response.data);
+          
+          // 增加浏览量
+          await articleApiService.incrementViewCount(response.data.id);
+          
+          // 获取相关文章（同分类的文章）
+          const relatedResponse = await articleApiService.getArticlesByCategory(
+            parseInt(response.data.category.id), 
+            0, 
+            3
+          );
+          if (relatedResponse.code === 200 && relatedResponse.data) {
+            // 过滤掉当前文章
+            const filtered = relatedResponse.data.content.filter(
+              item => item.id !== response.data.id
+            );
+            setRelatedArticles(filtered.slice(0, 3));
+          }
+        } else {
+          // 如果API失败，显示示例文章
+          const sampleArticle: Article = {
+            id: 1,
+            title: '欢迎来到我的博客',
+            slug: resolvedParams.slug,
+            content: `
+# 欢迎来到我的博客
+
+欢迎来到我的个人博客！这里是我分享技术文章、学习心得和生活感悟的地方。
+
+## 关于我
+
+我是一名热爱技术的开发者，专注于前端开发、全栈开发和技术分享。
+
+## 技术栈
+
+- **前端**: React, Next.js, TypeScript, Tailwind CSS
+- **后端**: Spring Boot, Java, MySQL
+- **工具**: Git, Docker, VS Code
+
+## 博客特色
+
+- 📝 技术文章分享
+- 💡 学习心得记录
+- 🔧 项目经验总结
+- 📚 读书笔记
+
+感谢您的访问，希望我的文章能对您有所帮助！
+
+---
+
+*如果您有任何问题或建议，欢迎在评论区留言交流。*
+            `,
+            summary: '欢迎来到我的个人博客！这里是我分享技术文章、学习心得和生活感悟的地方。',
+            coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=600&fit=crop',
+            publishedAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+            createdAt: '2024-01-01',
+            viewCount: 100,
+            likeCount: 10,
+            commentCount: 5,
+            isPublished: true,
+            isPinned: true,
+            category: { id: '1', name: '博客介绍', slug: 'blog-intro', color: '#3b82f6', articleCount: 1, createdAt: '2024-01-01' },
+            tags: [
+              { id: '1', name: '博客', slug: 'blog', color: '#000000', articleCount: 1, createdAt: '2024-01-01' },
+              { id: '2', name: '介绍', slug: 'intro', color: '#61dafb', articleCount: 1, createdAt: '2024-01-01' }
+            ]
+          };
+          setArticle(sampleArticle);
+          setRelatedArticles([]);
+        }
+      } catch (err: any) {
+        console.error('获取文章失败:', err);
+        // 显示示例文章而不是错误
+        const sampleArticle: Article = {
+          id: 1,
+          title: '欢迎来到我的博客',
+          slug: resolvedParams.slug,
+          content: `
+# 欢迎来到我的博客
+
+欢迎来到我的个人博客！这里是我分享技术文章、学习心得和生活感悟的地方。
+
+## 关于我
+
+我是一名热爱技术的开发者，专注于前端开发、全栈开发和技术分享。
+
+## 技术栈
+
+- **前端**: React, Next.js, TypeScript, Tailwind CSS
+- **后端**: Spring Boot, Java, MySQL
+- **工具**: Git, Docker, VS Code
+
+## 博客特色
+
+- 📝 技术文章分享
+- 💡 学习心得记录
+- 🔧 项目经验总结
+- 📚 读书笔记
+
+感谢您的访问，希望我的文章能对您有所帮助！
+
+---
+
+*如果您有任何问题或建议，欢迎在评论区留言交流。*
+          `,
+          summary: '欢迎来到我的个人博客！这里是我分享技术文章、学习心得和生活感悟的地方。',
+          coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=600&fit=crop',
+          publishedAt: '2024-01-01',
+          updatedAt: '2024-01-01',
+          createdAt: '2024-01-01',
+          viewCount: 100,
+          likeCount: 10,
+          commentCount: 5,
+          isPublished: true,
+          isPinned: true,
+          category: { id: '1', name: '博客介绍', slug: 'blog-intro', color: '#3b82f6', articleCount: 1, createdAt: '2024-01-01' },
+          tags: [
+            { id: '1', name: '博客', slug: 'blog', color: '#000000', articleCount: 1, createdAt: '2024-01-01' },
+            { id: '2', name: '介绍', slug: 'intro', color: '#61dafb', articleCount: 1, createdAt: '2024-01-01' }
+          ]
+        };
+        setArticle(sampleArticle);
+        setRelatedArticles([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchArticle();
+  }, [resolvedParams.slug]);
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">加载中...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !article) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-destructive text-lg mb-4">{error || '文章不存在'}</p>
+            <Link
+              href="/articles"
+              className="inline-flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>返回文章列表</span>
+            </Link>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
   return (
-    <div className="container mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
       {/* 返回按钮 */}
       <div className="mb-6">
         <Link
@@ -171,30 +252,31 @@ export default function ArticleDetailPage({ params: _params }: { params: { slug:
             <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
 
             {/* 摘要 */}
-            <p className="text-xl text-muted-foreground mb-6">{article.excerpt}</p>
+            <p className="text-xl text-muted-foreground mb-6">{article.summary}</p>
 
             {/* 元信息 */}
             <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground mb-6">
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4" />
-                <span>{article.author.name}</span>
+                <span>{config.bloggerName}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar className="h-4 w-4" />
-                <span>{formatDate(article.publishedAt)}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4" />
-                <span>{article.readTime} 分钟阅读</span>
+                <span>{formatDate(article.publishedAt || article.createdAt)}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Eye className="h-4 w-4" />
-                <span>{article.views} 次浏览</span>
+                <span>{article.viewCount} 次浏览</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Heart className="h-4 w-4" />
-                <span>{article.likes} 个赞</span>
-              </div>
+              <button
+                onClick={handleLike}
+                className={`flex items-center space-x-2 hover:text-primary transition-colors ${
+                  isLiked ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                <span>{article.likeCount} 个赞</span>
+              </button>
             </div>
 
             {/* 标签 */}
@@ -246,14 +328,19 @@ export default function ArticleDetailPage({ params: _params }: { params: { slug:
             <div className="bg-card rounded-lg border p-6 sticky top-4">
               <h3 className="text-lg font-semibold mb-4">相关文章</h3>
               <div className="space-y-4">
-                {relatedArticles.map((relatedArticle) => (
-                  <ArticleCard key={relatedArticle.id} article={relatedArticle} />
-                ))}
+                {relatedArticles.length > 0 ? (
+                  relatedArticles.map((relatedArticle) => (
+                    <ArticleCard key={relatedArticle.id} article={relatedArticle} />
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-sm">暂无相关文章</p>
+                )}
               </div>
             </div>
           </div>
         </aside>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
@@ -12,145 +12,281 @@ import {
   Save,
   ExternalLink,
   Eye,
-  EyeOff
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Mail
 } from 'lucide-react';
 import Image from "next/image";
-
-// 模拟友链数据
-const initialLinks = [
-  {
-    id: 1,
-    name: '技术博客',
-    url: 'https://tech-blog.com',
-    description: '分享技术文章和开发经验',
-    logo: 'https://via.placeholder.com/32x32',
-    isVisible: true,
-    sortOrder: 1,
-    createdAt: '2024-01-01',
-  },
-  {
-    id: 2,
-    name: '前端开发',
-    url: 'https://frontend-dev.com',
-    description: '专注于前端技术的学习和分享',
-    logo: 'https://via.placeholder.com/32x32',
-    isVisible: true,
-    sortOrder: 2,
-    createdAt: '2024-01-01',
-  },
-  {
-    id: 3,
-    name: '设计灵感',
-    url: 'https://design-inspiration.com',
-    description: '收集优秀的设计作品和灵感',
-    logo: 'https://via.placeholder.com/32x32',
-    isVisible: false,
-    sortOrder: 3,
-    createdAt: '2024-01-01',
-  },
-];
+import { Pagination, usePagination } from '@/components/ui/pagination';
+import { friendLinkApiService } from '@/lib/api/friend-links';
+import { urlMetadataApiService } from '@/lib/api/url-metadata';
+import type { FriendLink } from '@/types';
 
 interface Link {
   id: number;
   name: string;
   url: string;
   description: string;
-  logo?: string;
+    logo?: string;
   isVisible: boolean;
   sortOrder: number;
   createdAt: string;
 }
 
 export default function LinksManagement() {
-  const [links, setLinks] = useState<Link[]>(initialLinks);
+  const [links, setLinks] = useState<FriendLink[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingLink, setEditingLink] = useState<Link | null>(null);
+  const [editingLink, setEditingLink] = useState<FriendLink | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingLink, setDeletingLink] = useState<FriendLink | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     url: '',
     description: '',
-    logo: '',
-    isVisible: true,
+      logo: '',
+    isApproved: true,
     sortOrder: 0,
+    email: '',
   });
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
+  const [metadataError, setMetadataError] = useState('');
 
-  const filteredLinks = links.filter(link =>
-    link.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    link.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    link.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleAddLink = () => {
-    if (!formData.name.trim() || !formData.url.trim()) return;
-
-    const newLink: Link = {
-      id: Date.now(),
-      name: formData.name,
-      url: formData.url,
-      description: formData.description,
-      logo: formData.logo || undefined,
-      isVisible: formData.isVisible,
-      sortOrder: formData.sortOrder || links.length + 1,
-      createdAt: new Date().toISOString(),
+  // 获取友链列表
+  useEffect(() => {
+    const fetchLinks = async () => {
+      try {
+        setIsLoading(true);
+        setError('');
+        const response = await friendLinkApiService.getFriendLinks(0, 1000);
+        if (response.code === 200 && response.data && Array.isArray(response.data.content)) {
+          setLinks(response.data.content);
+        } else {
+          setError('获取友链列表失败');
+          setLinks([]); // 确保links始终是数组
+        }
+      } catch (err: any) {
+        setError(err.message || '获取友链列表失败');
+        setLinks([]); // 确保links始终是数组
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setLinks([...links, newLink]);
-    setFormData({ name: '', url: '', description: '', logo: '', isVisible: true, sortOrder: 0 });
-    setShowAddForm(false);
+    fetchLinks();
+  }, []);
+
+  const filteredLinks = (Array.isArray(links) ? links : []).filter(link =>
+    link.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    link.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (link.description && link.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // 分页功能
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    currentItems,
+    goToPage,
+  } = usePagination(filteredLinks, 10);
+
+  const handleAddLink = async () => {
+    if (!formData.name.trim() || !formData.url.trim()) return;
+
+    try {
+      const response = await friendLinkApiService.createFriendLink({
+        name: formData.name,
+        url: formData.url,
+        description: formData.description,
+          logo: formData.logo || undefined,
+        isApproved: formData.isApproved,
+        sortOrder: formData.sortOrder || links.length + 1,
+        email: formData.email,
+      });
+
+      if (response.code === 200) {
+        setLinks(prev => [...prev, response.data]);
+        setFormData({ name: '', url: '', description: '', logo: '', isApproved: true, sortOrder: 0, email: '' });
+        setShowAddForm(false);
+      }
+    } catch (err: any) {
+      console.error('添加友链失败:', err);
+      setError(err.message || '添加友链失败');
+    }
   };
 
-  const handleEditLink = (link: Link) => {
+  const handleEditLink = (link: FriendLink) => {
     setEditingLink(link);
     setFormData({
       name: link.name,
       url: link.url,
-      description: link.description,
-      logo: link.logo || '',
-      isVisible: link.isVisible,
-      sortOrder: link.sortOrder,
+      description: link.description || '',
+        logo: link.logo || '',
+      isApproved: link.isApproved,
+      sortOrder: link.sortOrder || 0,
+      email: link.email || '',
     });
+    setShowAddForm(true);
   };
 
-  const handleUpdateLink = () => {
+  const handleUpdateLink = async () => {
     if (!editingLink || !formData.name.trim() || !formData.url.trim()) return;
 
-    setLinks(links.map(link =>
-      link.id === editingLink.id
-        ? {
-            ...link,
-            name: formData.name,
-            url: formData.url,
-            description: formData.description,
-            logo: formData.logo || undefined,
-            isVisible: formData.isVisible,
-            sortOrder: formData.sortOrder,
-          }
-        : link
-    ));
+    try {
+      const response = await friendLinkApiService.updateFriendLink(editingLink.id, {
+        name: formData.name,
+        url: formData.url,
+        description: formData.description,
+          logo: formData.logo || undefined,
+        isApproved: formData.isApproved,
+        sortOrder: formData.sortOrder,
+        email: formData.email,
+      });
 
-    setEditingLink(null);
-    setFormData({ name: '', url: '', description: '', logo: '', isVisible: true, sortOrder: 0 });
-  };
-
-  const handleDeleteLink = (id: number) => {
-    if (confirm('确定要删除这个友链吗？')) {
-      setLinks(links.filter(link => link.id !== id));
+      if (response.code === 200) {
+        setLinks(prev => prev.map(link => 
+          link.id === editingLink.id ? response.data : link
+        ));
+        setFormData({ name: '', url: '', description: '', logo: '', isApproved: true, sortOrder: 0, email: '' });
+        setEditingLink(null);
+        setShowAddForm(false);
+      }
+    } catch (err: any) {
+      console.error('更新友链失败:', err);
+      setError(err.message || '更新友链失败');
     }
   };
 
-  const handleToggleVisibility = (id: number) => {
-    setLinks(links.map(link =>
-      link.id === id
-        ? { ...link, isVisible: !link.isVisible }
-        : link
-    ));
+  const handleDeleteLink = (link: FriendLink) => {
+    setDeletingLink(link);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteLink = async () => {
+    if (!deletingLink) return;
+    
+    try {
+      const response = await friendLinkApiService.deleteFriendLink(deletingLink.id);
+      if (response.code === 200) {
+        setLinks(prev => prev.filter(link => link.id !== deletingLink.id));
+        setShowDeleteModal(false);
+        setDeletingLink(null);
+      }
+    } catch (err: any) {
+      console.error('删除友链失败:', err);
+      setError(err.message || '删除友链失败');
+    }
+  };
+
+  const cancelDeleteLink = () => {
+    setShowDeleteModal(false);
+    setDeletingLink(null);
+  };
+
+  const handleApproveLink = async (link: FriendLink) => {
+    try {
+      const response = await friendLinkApiService.approveFriendLink(link.id);
+      if (response.code === 200) {
+        setLinks(prev => prev.map(l => 
+          l.id === link.id ? response.data : l
+        ));
+      }
+    } catch (err: any) {
+      console.error('审核友链失败:', err);
+      setError(err.message || '审核友链失败');
+    }
+  };
+
+  const handleRejectLink = async (link: FriendLink) => {
+    try {
+      const response = await friendLinkApiService.rejectFriendLink(link.id);
+      if (response.code === 200) {
+        setLinks(prev => prev.map(l => 
+          l.id === link.id ? response.data : l
+        ));
+      }
+    } catch (err: any) {
+      console.error('拒绝友链失败:', err);
+      setError(err.message || '拒绝友链失败');
+    }
+  };
+
+  const handleToggleApproval = async (link: FriendLink) => {
+    try {
+      let response;
+      if (link.isApproved) {
+        // 如果已审核，则拒绝
+        response = await friendLinkApiService.rejectFriendLink(link.id);
+      } else {
+        // 如果未审核，则通过
+        response = await friendLinkApiService.approveFriendLink(link.id);
+      }
+      
+      if (response.code === 200) {
+        setLinks(prev => prev.map(l => 
+          l.id === link.id ? response.data : l
+        ));
+      }
+    } catch (err: any) {
+      console.error('审核操作失败:', err);
+      setError(err.message || '审核操作失败');
+    }
   };
 
   const handleCancel = () => {
     setShowAddForm(false);
     setEditingLink(null);
-    setFormData({ name: '', url: '', description: '', logo: '', isVisible: true, sortOrder: 0 });
+    setFormData({ name: '', url: '', description: '', logo: '', isApproved: true, sortOrder: 0, email: '' });
+    setMetadataError('');
+  };
+
+  // 获取URL元数据
+  const fetchUrlMetadata = async (url: string) => {
+    if (!url || url.trim() === '') return;
+    
+    try {
+      setIsFetchingMetadata(true);
+      setMetadataError('');
+      
+      const response = await urlMetadataApiService.fetchUrlMetadata(url);
+      
+      if (response.code === 200 && response.data && response.data.success) {
+        const metadata = response.data;
+        setFormData(prev => ({
+          ...prev,
+          name: metadata.title || prev.name,
+          description: metadata.description || prev.description,
+            logo: metadata.logo || prev.logo,
+        }));
+      } else {
+        setMetadataError(response.message || '获取网站信息失败');
+      }
+    } catch (error: any) {
+      setMetadataError('获取网站信息失败: ' + error.message);
+    } finally {
+      setIsFetchingMetadata(false);
+    }
+  };
+
+  // URL输入变化处理
+  const handleUrlChange = (url: string) => {
+    setFormData(prev => ({ ...prev, url }));
+    setMetadataError('');
+  };
+
+  // 手动获取网站信息
+  const handleFetchMetadata = () => {
+    if (!formData.url || formData.url.trim() === '') {
+      setMetadataError('请输入网站URL');
+      return;
+    }
+    fetchUrlMetadata(formData.url);
   };
 
   return (
@@ -223,13 +359,43 @@ export default function LinksManagement() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   网站链接 *
                 </label>
-                <input
-                  type="url"
-                  value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="https://example.com"
-                />
+                <div className="flex space-x-2">
+                  <div className="flex-1 relative">
+                    <input
+                      type="url"
+                      value={formData.url}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="https://example.com"
+                    />
+                    {isFetchingMetadata && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleFetchMetadata}
+                    disabled={isFetchingMetadata || !formData.url.trim()}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center space-x-2"
+                  >
+                    {isFetchingMetadata ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>获取中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search className="h-4 w-4" />
+                        <span>获取信息</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                {metadataError && (
+                  <p className="text-sm text-red-500 mt-1">{metadataError}</p>
+                )}
               </div>
 
               <div className="md:col-span-2">
@@ -275,11 +441,11 @@ export default function LinksManagement() {
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={formData.isVisible}
-                    onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })}
+                    checked={formData.isApproved}
+                    onChange={(e) => setFormData({ ...formData, isApproved: e.target.checked })}
                     className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">显示在友链页面</span>
+                  <span className="text-sm font-medium text-gray-700">审核通过</span>
                 </label>
               </div>
             </div>
@@ -311,13 +477,13 @@ export default function LinksManagement() {
           <h3 className="text-lg font-semibold text-gray-900">友链列表</h3>
         </div>
         <div className="divide-y divide-gray-200">
-          {filteredLinks.length === 0 ? (
+          {currentItems.length === 0 ? (
             <div className="p-8 text-center">
               <LinkIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">没有找到友链</p>
             </div>
           ) : (
-            filteredLinks.map((link) => (
+            currentItems.map((link) => (
               <motion.div
                 key={link.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -343,11 +509,11 @@ export default function LinksManagement() {
                       <div className="flex items-center space-x-2">
                         <h4 className="text-lg font-medium text-gray-900">{link.name}</h4>
                         <span className={`px-2 py-1 text-xs rounded-full ${
-                          link.isVisible 
+                          link.isApproved 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-gray-100 text-gray-800'
                         }`}>
-                          {link.isVisible ? '显示' : '隐藏'}
+                          {link.isApproved ? '已审核' : '待审核'}
                         </span>
                       </div>
                       <p className="text-sm text-gray-500">{link.description}</p>
@@ -370,15 +536,15 @@ export default function LinksManagement() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleToggleVisibility(link.id)}
+                      onClick={() => handleToggleApproval(link)}
                       className={`p-2 rounded-lg transition-colors ${
-                        link.isVisible
-                          ? 'text-gray-400 hover:text-green-600 hover:bg-green-50'
-                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                        link.isApproved
+                          ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                          : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
                       }`}
-                      title={link.isVisible ? '隐藏' : '显示'}
+                      title={link.isApproved ? '拒绝审核' : '审核通过'}
                     >
-                      {link.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      {link.isApproved ? <AlertCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
                     </button>
                     <button
                       onClick={() => handleEditLink(link)}
@@ -387,7 +553,7 @@ export default function LinksManagement() {
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteLink(link.id)}
+                      onClick={() => handleDeleteLink(link)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -398,7 +564,58 @@ export default function LinksManagement() {
             ))
           )}
         </div>
+        
+        {/* 分页组件 */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={10}
+              onPageChange={goToPage}
+            />
+          </div>
+        )}
       </div>
+
+      {/* 删除确认对话框 */}
+      {showDeleteModal && deletingLink && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">删除友链</h3>
+                <p className="text-sm text-gray-500">此操作不可撤销</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700">
+                确定要删除友链 <span className="font-medium text-gray-900">"{deletingLink.name}"</span> 吗？
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={cancelDeleteLink}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmDeleteLink}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

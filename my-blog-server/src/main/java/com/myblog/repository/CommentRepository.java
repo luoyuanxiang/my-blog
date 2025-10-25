@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -45,4 +46,14 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      * 统计待审核评论数
      */
     long countByIsApprovedFalse();
+
+    /**
+     * 统计已审核评论数
+     */
+    long countByIsApproved(Boolean isApproved);
+
+    /**
+     * 统计指定时间范围内的评论数量
+     */
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

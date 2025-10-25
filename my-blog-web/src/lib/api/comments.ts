@@ -1,172 +1,134 @@
-import { httpClient } from './client';
-import { API_ENDPOINTS } from './config';
-import type { Comment, PaginationParams } from '@/types';
+import { HttpClient } from './client';
+import { ApiResponse, PageResponse, Comment } from '@/types';
 
-// 评论创建请求类型
-export interface CommentRequest {
-  articleId?: string;
-  parentId?: string;
-  author: string;
-  email: string;
-  content: string;
-  website?: string;
-}
+/**
+ * 评论API服务
+ * 提供评论相关的API调用方法
+ */
+class CommentApiService {
+  private httpClient = new HttpClient();
 
-// API 响应类型
-export interface ApiResponse<T> {
-  code: number;
-  message: string;
-  data: T;
-}
-
-// 分页响应类型
-export interface PageResponse<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
-}
-
-// 评论 API 服务
-export class CommentApiService {
-  // 获取评论列表
-  async getComments(params?: PaginationParams): Promise<PageResponse<Comment>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<Comment>>>(
-      API_ENDPOINTS.COMMENTS.LIST,
-      params
-    );
-    return response.data;
+  /**
+   * 创建评论
+   * @param comment 评论数据
+   * @returns 创建结果
+   */
+  async createComment(comment: Omit<Comment, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Comment>> {
+    return this.httpClient.post<ApiResponse<Comment>>('/comments', comment);
   }
 
-  // 获取文章评论
-  async getArticleComments(articleId: string, params?: PaginationParams): Promise<PageResponse<Comment>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<Comment>>>(
-      API_ENDPOINTS.COMMENTS.BY_ARTICLE(articleId),
-      params
-    );
-    return response.data;
+  /**
+   * 更新评论
+   * @param id 评论ID
+   * @param comment 评论数据
+   * @returns 更新结果
+   */
+  async updateComment(id: number, comment: Partial<Comment>): Promise<ApiResponse<Comment>> {
+    return this.httpClient.put<ApiResponse<Comment>>(`/comments/${id}`, comment);
   }
 
-  // 获取评论详情
-  async getComment(id: string): Promise<Comment> {
-    const response = await httpClient.get<ApiResponse<Comment>>(
-      API_ENDPOINTS.COMMENTS.GET(id)
-    );
-    return response.data;
+  /**
+   * 删除评论
+   * @param id 评论ID
+   * @returns 删除结果
+   */
+  async deleteComment(id: number): Promise<ApiResponse<void>> {
+    return this.httpClient.delete<ApiResponse<void>>(`/comments/${id}`);
   }
 
-  // 创建评论
-  async createComment(commentData: CommentRequest): Promise<Comment> {
-    const response = await httpClient.post<ApiResponse<Comment>>(
-      API_ENDPOINTS.COMMENTS.CREATE,
-      commentData
-    );
-    return response.data;
+  /**
+   * 根据ID获取评论
+   * @param id 评论ID
+   * @returns 评论详情
+   */
+  async getCommentById(id: number): Promise<ApiResponse<Comment>> {
+    return this.httpClient.get<ApiResponse<Comment>>(`/comments/${id}`);
   }
 
-  // 更新评论
-  async updateComment(id: string, commentData: Partial<CommentRequest>): Promise<Comment> {
-    const response = await httpClient.put<ApiResponse<Comment>>(
-      API_ENDPOINTS.COMMENTS.UPDATE(id),
-      commentData
-    );
-    return response.data;
-  }
-
-  // 删除评论
-  async deleteComment(id: string): Promise<void> {
-    await httpClient.delete<ApiResponse<void>>(
-      API_ENDPOINTS.COMMENTS.DELETE(id)
+  /**
+   * 根据文章ID获取评论列表
+   * @param articleId 文章ID
+   * @param page 页码
+   * @param size 每页大小
+   * @returns 评论列表
+   */
+  async getCommentsByArticleId(
+    articleId: number,
+    page: number = 0,
+    size: number = 10
+  ): Promise<ApiResponse<PageResponse<Comment>>> {
+    return this.httpClient.get<ApiResponse<PageResponse<Comment>>>(
+      `/comments/article/${articleId}?page=${page}&size=${size}`
     );
   }
 
-  // 审核通过评论
-  async approveComment(id: string): Promise<Comment> {
-    const response = await httpClient.patch<ApiResponse<Comment>>(
-      API_ENDPOINTS.COMMENTS.APPROVE(id)
-    );
-    return response.data;
-  }
-
-  // 审核拒绝评论
-  async disapproveComment(id: string): Promise<Comment> {
-    const response = await httpClient.patch<ApiResponse<Comment>>(
-      API_ENDPOINTS.COMMENTS.DISAPPROVE(id)
-    );
-    return response.data;
-  }
-
-  // 点赞评论
-  async likeComment(id: string): Promise<Comment> {
-    const response = await httpClient.patch<ApiResponse<Comment>>(
-      `${API_ENDPOINTS.COMMENTS.GET(id)}/like`
-    );
-    return response.data;
-  }
-
-  // 取消点赞评论
-  async unlikeComment(id: string): Promise<Comment> {
-    const response = await httpClient.patch<ApiResponse<Comment>>(
-      `${API_ENDPOINTS.COMMENTS.GET(id)}/unlike`
-    );
-    return response.data;
-  }
-
-  // 获取待审核评论
-  async getPendingComments(params?: PaginationParams): Promise<PageResponse<Comment>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<Comment>>>(
-      API_ENDPOINTS.COMMENTS.LIST,
-      { ...params, approved: false }
-    );
-    return response.data;
-  }
-
-  // 获取已审核评论
-  async getApprovedComments(params?: PaginationParams): Promise<PageResponse<Comment>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<Comment>>>(
-      API_ENDPOINTS.COMMENTS.LIST,
-      { ...params, approved: true }
-    );
-    return response.data;
-  }
-
-  // 批量审核评论
-  async batchApproveComments(commentIds: string[]): Promise<void> {
-    await httpClient.patch<ApiResponse<void>>(
-      `${API_ENDPOINTS.COMMENTS.LIST}/batch-approve`,
-      { commentIds }
+  /**
+   * 获取待审核评论列表
+   * @param page 页码
+   * @param size 每页大小
+   * @returns 待审核评论列表
+   */
+  async getPendingComments(
+    page: number = 0,
+    size: number = 10
+  ): Promise<ApiResponse<PageResponse<Comment>>> {
+    return this.httpClient.get<ApiResponse<PageResponse<Comment>>>(
+      `/comments/pending?page=${page}&size=${size}`
     );
   }
 
-  // 批量删除评论
-  async batchDeleteComments(commentIds: string[]): Promise<void> {
-    await httpClient.patch<ApiResponse<void>>(
-      `${API_ENDPOINTS.COMMENTS.LIST}/batch-delete`,
-      { commentIds }
+  /**
+   * 获取所有评论列表（分页）
+   * @param page 页码
+   * @param size 每页大小
+   * @returns 评论列表
+   */
+  async getAllComments(
+    page: number = 0,
+    size: number = 10
+  ): Promise<ApiResponse<PageResponse<Comment>>> {
+    // 由于后端没有提供获取所有评论的接口，我们使用待审核评论接口
+    // 在实际项目中，应该添加一个获取所有评论的接口
+    return this.httpClient.get<ApiResponse<PageResponse<Comment>>>(
+      `/comments/pending?page=${page}&size=${size}`
     );
   }
 
-  // 获取评论统计信息
-  async getCommentStats(): Promise<{
-    total: number;
-    approved: number;
-    pending: number;
-    today: number;
-  }> {
-    const response = await httpClient.get<ApiResponse<{
-      total: number;
-      approved: number;
-      pending: number;
-      today: number;
-    }>>(
-      `${API_ENDPOINTS.COMMENTS.LIST}/stats`
-    );
-    return response.data;
+  /**
+   * 审核通过评论
+   * @param id 评论ID
+   * @returns 审核结果
+   */
+  async approveComment(id: number): Promise<ApiResponse<Comment>> {
+    return this.httpClient.post<ApiResponse<Comment>>(`/comments/${id}/approve`);
+  }
+
+  /**
+   * 拒绝评论
+   * @param id 评论ID
+   * @returns 拒绝结果
+   */
+  async rejectComment(id: number): Promise<ApiResponse<Comment>> {
+    return this.httpClient.post<ApiResponse<Comment>>(`/comments/${id}/reject`);
+  }
+
+  /**
+   * 点赞评论
+   * @param id 评论ID
+   * @returns 点赞结果
+   */
+  async incrementLikeCount(id: number): Promise<ApiResponse<void>> {
+    return this.httpClient.post<ApiResponse<void>>(`/comments/${id}/like`);
+  }
+
+  /**
+   * 获取评论回复
+   * @param id 评论ID
+   * @returns 回复列表
+   */
+  async getCommentReplies(id: number): Promise<ApiResponse<Comment[]>> {
+    return this.httpClient.get<ApiResponse<Comment[]>>(`/comments/${id}/replies`);
   }
 }
 
-// 创建评论服务实例
 export const commentApiService = new CommentApiService();

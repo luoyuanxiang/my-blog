@@ -11,6 +11,7 @@ import {
   FolderOpen, 
   Link as LinkIcon, 
   MessageSquare, 
+  MessageCircle,
   Settings, 
   LogOut, 
   Menu,
@@ -34,6 +35,7 @@ const navigation = [
   { name: '分类管理', href: '/admin/categories', icon: FolderOpen },
   { name: '友链管理', href: '/admin/links', icon: LinkIcon },
   { name: '评论管理', href: '/admin/comments', icon: MessageSquare },
+  { name: '留言板管理', href: '/admin/guestbook', icon: MessageCircle },
   { name: '系统设置', href: '/admin/settings', icon: Settings },
 ];
 
@@ -69,7 +71,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     return null;
   }
 
-  // 加载中状态
+  // 如果正在加载，显示加载状态
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

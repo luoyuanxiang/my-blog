@@ -41,13 +41,21 @@ export function AuthorCard({ author, className }: AuthorCardProps) {
       {/* 作者头像和基本信息 */}
       <div className="flex flex-col items-center text-center mb-6">
         <div className="relative mb-4">
-          <Image
-            src={author.avatar}
-            alt={author.name}
-            width={80}
-            height={80}
-            className="rounded-full border-2 border-primary/20"
-          />
+          {author.avatar && author.avatar.trim() !== '' ? (
+            <Image
+              src={author.avatar}
+              alt={author.name}
+              width={80}
+              height={80}
+              className="rounded-full border-2 border-primary/20"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-full border-2 border-primary/20 bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+              <span className="text-2xl font-bold text-primary">
+                {author.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
           <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-background"></div>
         </div>
         

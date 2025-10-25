@@ -1,198 +1,143 @@
 import { httpClient } from './client';
-import { API_ENDPOINTS } from './config';
-import type { GuestbookMessage, PaginationParams } from '@/types';
+import type { ApiResponse, GuestbookMessage, PageResponse } from '@/types';
 
-// 留言创建请求类型
-export interface GuestbookMessageRequest {
-  author: string;
-  email: string;
-  content: string;
-  website?: string;
-  parentId?: string;
-}
-
-// API 响应类型
-export interface ApiResponse<T> {
-  code: number;
-  message: string;
-  data: T;
-}
-
-// 分页响应类型
-export interface PageResponse<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
-}
-
-// 留言板 API 服务
-export class GuestbookApiService {
-  // 获取留言列表
-  async getMessages(params?: PaginationParams): Promise<PageResponse<GuestbookMessage>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<GuestbookMessage>>>(
-      API_ENDPOINTS.GUESTBOOK.LIST,
-      params
-    );
-    return response.data;
-  }
-
-  // 获取已审核的留言列表
-  async getApprovedMessages(params?: PaginationParams): Promise<PageResponse<GuestbookMessage>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<GuestbookMessage>>>(
-      API_ENDPOINTS.GUESTBOOK.LIST,
-      { ...params, approved: true }
-    );
-    return response.data;
-  }
-
-  // 获取留言详情
-  async getMessage(id: string): Promise<GuestbookMessage> {
-    const response = await httpClient.get<ApiResponse<GuestbookMessage>>(
-      API_ENDPOINTS.GUESTBOOK.GET(id)
-    );
-    return response.data;
-  }
-
-  // 创建留言
-  async createMessage(messageData: GuestbookMessageRequest): Promise<GuestbookMessage> {
-    const response = await httpClient.post<ApiResponse<GuestbookMessage>>(
-      API_ENDPOINTS.GUESTBOOK.CREATE,
-      messageData
-    );
-    return response.data;
-  }
-
-  // 更新留言
-  async updateMessage(id: string, messageData: Partial<GuestbookMessageRequest>): Promise<GuestbookMessage> {
-    const response = await httpClient.put<ApiResponse<GuestbookMessage>>(
-      API_ENDPOINTS.GUESTBOOK.UPDATE(id),
-      messageData
-    );
-    return response.data;
-  }
-
-  // 删除留言
-  async deleteMessage(id: string): Promise<void> {
-    await httpClient.delete<ApiResponse<void>>(
-      API_ENDPOINTS.GUESTBOOK.DELETE(id)
+/**
+ * 留言板API服务
+ * 处理留言板的增删改查操作
+ */
+class GuestbookApiService {
+  /**
+   * 获取留言列表（分页）
+   * @param page 页码
+   * @param size 每页大小
+   * @param sortBy 排序字段
+   * @param sortDir 排序方向
+   * @returns 分页留言列表
+   */
+  async getMessages(
+    page: number = 0,
+    size: number = 10,
+    sortBy: string = 'createdAt',
+    sortDir: string = 'desc'
+  ): Promise<ApiResponse<PageResponse<GuestbookMessage>>> {
+    return httpClient.get<ApiResponse<PageResponse<GuestbookMessage>>>(
+      `/guestbook?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
     );
   }
 
-  // 审核通过留言
-  async approveMessage(id: string): Promise<GuestbookMessage> {
-    const response = await httpClient.patch<ApiResponse<GuestbookMessage>>(
-      API_ENDPOINTS.GUESTBOOK.APPROVE(id)
-    );
-    return response.data;
+  /**
+   * 获取所有留言
+   * @returns 所有留言列表
+   */
+  async getAllMessages(): Promise<ApiResponse<GuestbookMessage[]>> {
+    // 使用分页接口获取所有留言，设置较大的size来获取所有数据
+    const response = await this.getMessages(0, 1000);
+    if (response.code === 200 && response.data) {
+      return {
+        ...response,
+        data: response.data.content || []
+      };
+    }
+    return response as ApiResponse<GuestbookMessage[]>;
   }
 
-  // 审核拒绝留言
-  async disapproveMessage(id: string): Promise<GuestbookMessage> {
-    const response = await httpClient.patch<ApiResponse<GuestbookMessage>>(
-      API_ENDPOINTS.GUESTBOOK.DISAPPROVE(id)
-    );
-    return response.data;
+  /**
+   * 根据ID获取留言
+   * @param id 留言ID
+   * @returns 留言详情
+   */
+  async getMessageById(id: string): Promise<ApiResponse<GuestbookMessage>> {
+    return httpClient.get<ApiResponse<GuestbookMessage>>(`/guestbook/${id}`);
   }
 
-  // 点赞留言
-  async likeMessage(id: string): Promise<GuestbookMessage> {
-    const response = await httpClient.patch<ApiResponse<GuestbookMessage>>(
-      `${API_ENDPOINTS.GUESTBOOK.GET(id)}/like`
-    );
-    return response.data;
+  /**
+   * 创建留言
+   * @param messageData 留言数据
+   * @returns 创建的留言
+   */
+  async createMessage(messageData: Omit<GuestbookMessage, 'id' | 'createdAt' | 'likes' | 'isApproved'>): Promise<ApiResponse<GuestbookMessage>> {
+    return httpClient.post<ApiResponse<GuestbookMessage>>('/guestbook', messageData);
   }
 
-  // 取消点赞留言
-  async unlikeMessage(id: string): Promise<GuestbookMessage> {
-    const response = await httpClient.patch<ApiResponse<GuestbookMessage>>(
-      `${API_ENDPOINTS.GUESTBOOK.GET(id)}/unlike`
-    );
-    return response.data;
+  /**
+   * 更新留言
+   * @param id 留言ID
+   * @param messageData 留言数据
+   * @returns 更新后的留言
+   */
+  async updateMessage(id: string, messageData: Partial<GuestbookMessage>): Promise<ApiResponse<GuestbookMessage>> {
+    return httpClient.put<ApiResponse<GuestbookMessage>>(`/guestbook/${id}`, messageData);
   }
 
-  // 获取待审核留言
-  async getPendingMessages(params?: PaginationParams): Promise<PageResponse<GuestbookMessage>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<GuestbookMessage>>>(
-      API_ENDPOINTS.GUESTBOOK.LIST,
-      { ...params, approved: false }
-    );
-    return response.data;
+  /**
+   * 删除留言
+   * @param id 留言ID
+   * @returns 操作结果
+   */
+  async deleteMessage(id: string): Promise<ApiResponse<void>> {
+    return httpClient.delete<ApiResponse<void>>(`/guestbook/${id}`);
   }
 
-  // 获取留言回复
-  async getMessageReplies(parentId: string, params?: PaginationParams): Promise<PageResponse<GuestbookMessage>> {
-    const response = await httpClient.get<ApiResponse<PageResponse<GuestbookMessage>>>(
-      API_ENDPOINTS.GUESTBOOK.LIST,
-      { ...params, parentId }
-    );
-    return response.data;
-  }
-
-  // 搜索留言
-  async searchMessages(query: string, params?: PaginationParams): Promise<PageResponse<GuestbookMessage>> {
-    const searchParams = {
-      ...params,
-      search: query,
-    };
-    
-    const response = await httpClient.get<ApiResponse<PageResponse<GuestbookMessage>>>(
-      API_ENDPOINTS.GUESTBOOK.LIST,
-      searchParams
-    );
-    return response.data;
-  }
-
-  // 批量审核留言
-  async batchApproveMessages(messageIds: string[]): Promise<void> {
-    await httpClient.patch<ApiResponse<void>>(
-      `${API_ENDPOINTS.GUESTBOOK.LIST}/batch-approve`,
-      { messageIds }
+  /**
+   * 获取已审核的留言
+   * @param page 页码
+   * @param size 每页大小
+   * @returns 已审核的留言列表
+   */
+  async getApprovedMessages(page: number = 0, size: number = 10): Promise<ApiResponse<PageResponse<GuestbookMessage>>> {
+    return httpClient.get<ApiResponse<PageResponse<GuestbookMessage>>>(
+      `/guestbook/approved?page=${page}&size=${size}`
     );
   }
 
-  // 批量删除留言
-  async batchDeleteMessages(messageIds: string[]): Promise<void> {
-    await httpClient.patch<ApiResponse<void>>(
-      `${API_ENDPOINTS.GUESTBOOK.LIST}/batch-delete`,
-      { messageIds }
+  /**
+   * 获取待审核的留言
+   * @param page 页码
+   * @param size 每页大小
+   * @returns 待审核的留言列表
+   */
+  async getPendingMessages(page: number = 0, size: number = 10): Promise<ApiResponse<PageResponse<GuestbookMessage>>> {
+    return httpClient.get<ApiResponse<PageResponse<GuestbookMessage>>>(
+      `/guestbook/pending?page=${page}&size=${size}`
     );
   }
 
-  // 获取留言统计信息
-  async getMessageStats(): Promise<{
-    total: number;
-    approved: number;
-    pending: number;
-    today: number;
-  }> {
-    const response = await httpClient.get<ApiResponse<{
-      total: number;
-      approved: number;
-      pending: number;
-      today: number;
-    }>>(
-      `${API_ENDPOINTS.GUESTBOOK.LIST}/stats`
-    );
-    return response.data;
+  /**
+   * 审核通过留言
+   * @param id 留言ID
+   * @returns 操作结果
+   */
+  async approveMessage(id: string): Promise<ApiResponse<GuestbookMessage>> {
+    return httpClient.post<ApiResponse<GuestbookMessage>>(`/guestbook/${id}/approve`);
   }
 
-  // 获取最新留言
-  async getLatestMessages(limit: number = 10): Promise<GuestbookMessage[]> {
-    const response = await httpClient.get<ApiResponse<GuestbookMessage[]>>(
-      API_ENDPOINTS.GUESTBOOK.LIST,
-      { 
-        size: limit, 
-        sort: 'createdAt,desc',
-        approved: true 
-      }
-    );
-    return response.data;
+  /**
+   * 拒绝留言
+   * @param id 留言ID
+   * @returns 操作结果
+   */
+  async rejectMessage(id: string): Promise<ApiResponse<GuestbookMessage>> {
+    return httpClient.post<ApiResponse<GuestbookMessage>>(`/guestbook/${id}/reject`);
+  }
+
+  /**
+   * 增加点赞数
+   * @param id 留言ID
+   * @returns 操作结果
+   */
+  async incrementLikeCount(id: string): Promise<ApiResponse<void>> {
+    return httpClient.post<ApiResponse<void>>(`/guestbook/${id}/like`);
+  }
+
+  /**
+   * 获取留言回复
+   * @param id 留言ID
+   * @returns 回复列表
+   */
+  async getMessageReplies(id: string): Promise<ApiResponse<GuestbookMessage[]>> {
+    return httpClient.get<ApiResponse<GuestbookMessage[]>>(`/guestbook/${id}/replies`);
   }
 }
 
-// 创建留言板服务实例
+// 导出服务实例
 export const guestbookApiService = new GuestbookApiService();

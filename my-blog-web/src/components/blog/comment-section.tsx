@@ -1,22 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Reply, ChevronDown } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
+import { commentApiService } from '@/lib/api/comments';
 import type { Comment } from '@/types';
 
 interface CommentSectionProps {
-  articleId: string;
+  articleId: number;
 }
 
 interface CommentFormProps {
-  onSubmit: (comment: Omit<Comment, 'id' | 'createdAt' | 'likes' | 'isApproved'>) => void;
+  onSubmit: (comment: Omit<Comment, 'id' | 'createdAt' | 'updatedAt' | 'likeCount' | 'isApproved'>) => void;
   isSubmitting: boolean;
   onCancel?: () => void;
+  articleId: number;
 }
 
-function CommentForm({ onSubmit, isSubmitting, onCancel }: CommentFormProps) {
+function CommentForm({ onSubmit, isSubmitting, onCancel, articleId }: CommentFormProps) {
   const [formData, setFormData] = useState({
     content: '',
     author: '',
@@ -28,6 +30,7 @@ function CommentForm({ onSubmit, isSubmitting, onCancel }: CommentFormProps) {
     e.preventDefault();
     if (formData.content.trim() && formData.author.trim() && formData.email.trim()) {
       onSubmit({
+        articleId: articleId,
         content: formData.content.trim(),
         author: formData.author.trim(),
         email: formData.email.trim(),
@@ -109,19 +112,25 @@ function CommentForm({ onSubmit, isSubmitting, onCancel }: CommentFormProps) {
 
 interface CommentItemProps {
   comment: Comment;
-  onReply: (parentId: string) => void;
-  onSubmitComment?: (commentData: Omit<Comment, 'id' | 'createdAt' | 'likes' | 'isApproved'>) => void;
+  onReply: (parentId: number) => void;
+  onSubmitComment?: (commentData: Omit<Comment, 'id' | 'createdAt' | 'updatedAt' | 'likeCount' | 'isApproved'>) => void;
   isSubmitting?: boolean;
-  replyingTo?: string | null;
+  replyingTo?: number | null;
 }
 
 function CommentItem({ comment, onReply, onSubmitComment, isSubmitting, replyingTo }: CommentItemProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    // 这里应该调用 API 来更新点赞数
+  const handleLike = async () => {
+    try {
+      await commentApiService.incrementLikeCount(comment.id);
+      setIsLiked(!isLiked);
+      // 更新本地状态
+      // 这里可以添加本地状态更新逻辑
+    } catch (err) {
+      console.error('点赞失败:', err);
+    }
   };
 
   return (
@@ -180,7 +189,7 @@ function CommentItem({ comment, onReply, onSubmitComment, isSubmitting, replying
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
               </motion.div>
-              <span>{comment.likes + (isLiked ? 1 : 0)}</span>
+              <span>{comment.likeCount + (isLiked ? 1 : 0)}</span>
             </motion.button>
             <motion.button
               onClick={() => onReply(comment.id)}
@@ -247,7 +256,8 @@ function CommentItem({ comment, onReply, onSubmitComment, isSubmitting, replying
                                 <CommentForm 
                                   onSubmit={onSubmitComment || (() => {})} 
                                   isSubmitting={isSubmitting || false}
-                                  onCancel={() => onReply('')}
+                                  onCancel={() => onReply(0)}
+                                  articleId={comment.articleId}
                                 />
                               </div>
                             </motion.div>
@@ -267,72 +277,69 @@ function CommentItem({ comment, onReply, onSubmitComment, isSubmitting, replying
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function CommentSection({ articleId: _articleId }: CommentSectionProps) {
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: '1',
-      content: '这篇文章写得很好，学到了很多新知识！',
-      author: '张三',
-      email: 'zhangsan@example.com',
-      website: 'https://zhangsan.com',
-      createdAt: '2024-01-15T10:30:00Z',
-      likes: 5,
-      isApproved: true,
-      replies: [
-        {
-          id: '2',
-          content: '同感！作者的技术水平很高。',
-          author: '李四',
-          email: 'lisi@example.com',
-          createdAt: '2024-01-15T11:00:00Z',
-          likes: 2,
-          isApproved: true,
-          parentId: '1'
-        }
-      ]
-    },
-    {
-      id: '3',
-      content: '感谢分享，期待更多这样的好文章！',
-      author: '王五',
-      email: 'wangwu@example.com',
-      createdAt: '2024-01-15T14:20:00Z',
-      likes: 3,
-      isApproved: true
-    }
-  ]);
-  
+export function CommentSection({ articleId }: CommentSectionProps) {
+  const [comments, setComments] = useState<Comment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
 
-  const handleSubmitComment = async (commentData: Omit<Comment, 'id' | 'createdAt' | 'likes' | 'isApproved'>) => {
+  // 获取评论列表
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        setIsLoading(true);
+        setError('');
+        const response = await commentApiService.getCommentsByArticleId(articleId, 0, 100);
+        if (response.code === 200 && response.data && Array.isArray(response.data.content)) {
+          setComments(response.data.content);
+        } else {
+          setError('获取评论列表失败');
+          setComments([]);
+        }
+      } catch (err: any) {
+        setError(err.message || '获取评论列表失败');
+        setComments([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [articleId]);
+
+  const handleSubmitComment = async (commentData: Omit<Comment, 'id' | 'createdAt' | 'updatedAt' | 'likeCount' | 'isApproved'>) => {
     setIsSubmitting(true);
     
-    // 模拟 API 调用
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newComment: Comment = {
-      ...commentData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      isApproved: true
-    };
-    
-    if (replyingTo) {
-      // 添加回复
-      setComments(prev => prev.map(comment => 
-        comment.id === replyingTo 
-          ? { ...comment, replies: [...(comment.replies || []), newComment] }
-          : comment
-      ));
-      setReplyingTo(null);
-    } else {
-      // 添加新评论
-      setComments(prev => [...prev, newComment]);
+    try {
+      const response = await commentApiService.createComment({
+        ...commentData,
+        likeCount: 0,
+        isApproved: false
+      });
+      if (response.code === 200 && response.data) {
+        const newComment = response.data;
+        
+        if (replyingTo) {
+          // 添加回复
+          setComments(prev => prev.map(comment => 
+            comment.id === replyingTo 
+              ? { ...comment, replies: [...(comment.replies || []), newComment] }
+              : comment
+          ));
+          setReplyingTo(null);
+        } else {
+          // 添加新评论
+          setComments(prev => [...prev, newComment]);
+        }
+      } else {
+        setError('提交评论失败');
+      }
+    } catch (err: any) {
+      setError(err.message || '提交评论失败');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
 
   return (
@@ -340,48 +347,70 @@ export function CommentSection({ articleId: _articleId }: CommentSectionProps) {
       <div>
         <h3 className="text-2xl font-bold mb-6">评论 ({comments.length})</h3>
         
+        {/* 错误提示 */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+        
         {/* 评论表单 */}
         <div className="bg-card rounded-lg border p-6 mb-8">
           <h4 className="text-lg font-semibold mb-4">发表评论</h4>
-          <CommentForm onSubmit={handleSubmitComment} isSubmitting={isSubmitting} />
+          <CommentForm onSubmit={handleSubmitComment} isSubmitting={isSubmitting} articleId={articleId} />
         </div>
         
-        {/* 评论列表 */}
-        <div className="space-y-6">
-          {comments.map((comment) => (
-            <div key={comment.id}>
-              <CommentItem 
-                comment={comment} 
-                onReply={setReplyingTo}
-                onSubmitComment={handleSubmitComment}
-                isSubmitting={isSubmitting}
-                replyingTo={replyingTo}
-              />
-              
-              {/* 回复表单 */}
-              <AnimatePresence>
-                {replyingTo === comment.id && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="ml-8 mt-4"
-                  >
-                    <div className="bg-muted/50 rounded-lg border p-4">
-                      <h5 className="text-sm font-semibold mb-3 text-foreground">回复 @{comment.author}</h5>
-                      <CommentForm 
-                        onSubmit={handleSubmitComment} 
-                        isSubmitting={isSubmitting}
-                        onCancel={() => setReplyingTo(null)}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
+        {/* 加载状态 */}
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="mt-2 text-muted-foreground">加载评论中...</p>
+          </div>
+        ) : (
+          /* 评论列表 */
+          <div className="space-y-6">
+            {comments.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>暂无评论，快来发表第一条评论吧！</p>
+              </div>
+            ) : (
+              comments.map((comment) => (
+                <div key={comment.id}>
+                  <CommentItem 
+                    comment={comment} 
+                    onReply={setReplyingTo}
+                    onSubmitComment={handleSubmitComment}
+                    isSubmitting={isSubmitting}
+                    replyingTo={replyingTo}
+                  />
+                  
+                  {/* 回复表单 */}
+                  <AnimatePresence>
+                    {replyingTo === comment.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="ml-8 mt-4"
+                      >
+                        <div className="bg-muted/50 rounded-lg border p-4">
+                          <h5 className="text-sm font-semibold mb-3 text-foreground">回复 @{comment.author}</h5>
+                          <CommentForm 
+                            onSubmit={handleSubmitComment} 
+                            isSubmitting={isSubmitting}
+                            onCancel={() => setReplyingTo(null)}
+                            articleId={articleId}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

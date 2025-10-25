@@ -1,23 +1,23 @@
-import type { NextConfig } from "next";
+import type {NextConfig} from "next";
 
 const nextConfig: NextConfig = {
-  turbopack: {},
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
+    turbopack: {},
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: '**',
+                port: '',
+                pathname: '/**',
+            },
+            {
+                protocol: 'http',
+                hostname: '**',
+                port: '',
+                pathname: '/**',
+            },
+        ],
+    },
 };
 
 export default nextConfig;

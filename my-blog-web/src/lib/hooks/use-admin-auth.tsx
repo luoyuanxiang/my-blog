@@ -41,7 +41,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 /**
  * 认证提供者组件
  */
-export function AdminAuthProvider({ children }: { children: ReactNode }) {
+export function AdminAuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,20 +56,18 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
    * 初始化认证状态
    */
   useEffect(() => {
-    const initAuth = async () => {
+    const initAuth = () => {
       try {
         const storedToken = localStorage.getItem('admin_token');
         const storedUser = localStorage.getItem('admin_user');
 
         if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-          
-          // 验证token是否有效
-          try {
-            await adminAuthApiService.validateToken(storedToken);
-          } catch {
-            // token无效，清除存储
+          // 简单检查token格式（JWT格式：xxx.xxx.xxx）
+          if (storedToken.split('.').length === 3) {
+            setToken(storedToken);
+            setUser(JSON.parse(storedUser));
+          } else {
+            // token格式不正确，清除存储
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin_user');
             setToken(null);
@@ -146,7 +144,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await adminAuthApiService.getCurrentUser();
       if (response.code === 200 && response.data) {
-        const userData = response.data;
+        const userData = response.data.user;
         localStorage.setItem('admin_user', JSON.stringify(userData));
         setUser(userData);
       }

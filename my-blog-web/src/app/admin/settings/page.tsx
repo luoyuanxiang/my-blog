@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Save, 
@@ -10,12 +10,21 @@ import {
   Database,
   Bell,
   Eye,
-  EyeOff
+  EyeOff,
+  AlertCircle
 } from 'lucide-react';
+import { systemSettingApiService } from '@/lib/api/system-settings';
+import type { SystemSetting } from '@/types';
 
 export default function SystemSettings() {
   const [activeTab, setActiveTab] = useState('basic');
   const [showPassword, setShowPassword] = useState(false);
+  const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // 本地设置状态，用于UI绑定
   const [settings, setSettings] = useState({
     // 基本信息
     siteName: '个人博客',
@@ -48,9 +57,95 @@ export default function SystemSettings() {
     allowedFileTypes: 'jpg,jpeg,png,gif,pdf,doc,docx',
   });
 
-  const handleSave = () => {
-    console.log('保存设置:', settings);
-    // 这里应该调用保存设置的 API
+  // 获取系统设置
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setIsLoading(true);
+        setError('');
+        const response = await systemSettingApiService.getAllSettings();
+        if (response.code === 200 && response.data) {
+          setSystemSettings(response.data);
+          // 将后端设置映射到本地状态
+          mapSettingsToLocal(response.data);
+        } else {
+          setError('获取系统设置失败');
+        }
+      } catch (err: any) {
+        setError(err.message || '获取系统设置失败');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  // 将后端设置映射到本地状态
+  const mapSettingsToLocal = (settings: SystemSetting[]) => {
+    const settingMap = settings.reduce((acc, setting) => {
+      acc[setting.key] = setting.value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    setSettings(prev => ({
+      ...prev,
+      siteName: settingMap['site.title'] || prev.siteName,
+      siteDescription: settingMap['site.description'] || prev.siteDescription,
+      siteUrl: settingMap['site.url'] || prev.siteUrl,
+      adminEmail: settingMap['site.email'] || prev.adminEmail,
+      adminName: settingMap['site.author'] || prev.adminName,
+      logo: settingMap['site.logo'] || prev.logo,
+      favicon: settingMap['site.favicon'] || prev.favicon,
+      emailNotifications: settingMap['notification.email'] === 'true',
+      commentNotifications: settingMap['notification.comment'] === 'true',
+      systemNotifications: settingMap['notification.system'] === 'true',
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      setError('');
+      
+      // 将本地设置转换为系统设置格式
+      const settingsToUpdate: SystemSetting[] = [
+        { id: 0, key: 'site.title', value: settings.siteName, description: '网站标题', settingType: 'string', isPublic: true, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'site.description', value: settings.siteDescription, description: '网站描述', settingType: 'string', isPublic: true, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'site.url', value: settings.siteUrl, description: '网站地址', settingType: 'string', isPublic: true, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'site.email', value: settings.adminEmail, description: '联系邮箱', settingType: 'string', isPublic: true, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'site.author', value: settings.adminName, description: '网站作者', settingType: 'string', isPublic: true, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'site.logo', value: settings.logo, description: 'Logo链接', settingType: 'string', isPublic: true, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'site.favicon', value: settings.favicon, description: 'Favicon链接', settingType: 'string', isPublic: true, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'notification.email', value: settings.emailNotifications.toString(), description: '邮件通知', settingType: 'boolean', isPublic: false, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'notification.comment', value: settings.commentNotifications.toString(), description: '评论通知', settingType: 'boolean', isPublic: false, createdAt: '', updatedAt: '' },
+        { id: 0, key: 'notification.system', value: settings.systemNotifications.toString(), description: '系统通知', settingType: 'boolean', isPublic: false, createdAt: '', updatedAt: '' },
+      ];
+
+      // 使用现有的系统设置ID更新
+      const updatedSettings = settingsToUpdate.map(setting => {
+        const existingSetting = systemSettings.find(s => s.key === setting.key);
+        return existingSetting ? { ...setting, id: existingSetting.id } : setting;
+      });
+
+      const response = await systemSettingApiService.updateSettings(updatedSettings);
+      if (response.code === 200) {
+        // 重新获取设置以确保数据同步
+        const refreshResponse = await systemSettingApiService.getAllSettings();
+        if (refreshResponse.code === 200 && refreshResponse.data) {
+          setSystemSettings(refreshResponse.data);
+          mapSettingsToLocal(refreshResponse.data);
+        }
+        alert('设置保存成功！');
+      } else {
+        setError('保存设置失败');
+      }
+    } catch (err: any) {
+      console.error('保存设置失败:', err);
+      setError(err.message || '保存设置失败');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const tabs = [
@@ -69,7 +164,25 @@ export default function SystemSettings() {
         <p className="text-gray-600">管理博客系统的基本配置和设置</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* 错误提示 */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+            <p className="text-red-800">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">加载中...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* 侧边栏 */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -439,18 +552,24 @@ export default function SystemSettings() {
             {/* 保存按钮 */}
             <div className="flex items-center justify-end pt-6 border-t border-gray-200">
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: isSaving ? 1 : 1.02 }}
+                whileTap={{ scale: isSaving ? 1 : 0.98 }}
                 onClick={handleSave}
-                className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200"
+                disabled={isSaving}
+                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-all duration-200 ${
+                  isSaving 
+                    ? 'bg-gray-400 text-white cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700'
+                }`}
               >
                 <Save className="h-4 w-4" />
-                <span>保存设置</span>
+                <span>{isSaving ? '保存中...' : '保存设置'}</span>
               </motion.button>
             </div>
           </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -176,7 +176,7 @@ export function TableOfContents({ content, className }: TableOfContentsProps) {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              {item.children!.map((child) => renderTocItem(child, depth + 1, uniqueKey))}
+              {item.children!.map((child, index) => renderTocItem(child, depth + 1, `${uniqueKey}-${index}`))}
             </motion.div>
           )}
         </AnimatePresence>
@@ -198,7 +198,7 @@ export function TableOfContents({ content, className }: TableOfContentsProps) {
       </div>
       
       <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-8rem)]">
-        {tocItems.map((item) => renderTocItem(item))}
+        {tocItems.map((item, index) => renderTocItem(item, 0, `root-${index}`))}
       </div>
       
       <div className="mt-4 pt-4 border-t border-border">

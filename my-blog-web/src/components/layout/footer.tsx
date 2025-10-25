@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
-import { Github, Twitter, Mail, Heart } from 'lucide-react';
+import { Github, Twitter, Mail, Heart, Linkedin } from 'lucide-react';
+import { useSystemConfig } from '@/lib/hooks/use-system-config';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { config } = useSystemConfig();
 
   return (
     <footer className="border-t bg-background">
@@ -11,31 +15,64 @@ export function Footer() {
           {/* About */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600" />
-              <span className="text-xl font-bold">我的博客</span>
+              {config.logo ? (
+                <img 
+                  src={config.logo} 
+                  alt={config.siteName}
+                  className="h-8 w-8 rounded-lg object-cover"
+                />
+              ) : (
+                <div 
+                  className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${config.primaryColor}, ${config.primaryColor}dd)`
+                  }}
+                />
+              )}
+              <span className="text-xl font-bold">{config.siteName}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              分享技术、记录生活，用文字记录成长的足迹。
+              {config.siteDescription}
             </p>
             <div className="flex space-x-4">
-              <Link
-                href="https://github.com"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Github className="h-5 w-5" />
-              </Link>
-              <Link
-                href="https://twitter.com"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link
-                href="mailto:contact@example.com"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Mail className="h-5 w-5" />
-              </Link>
+              {config.githubUrl && (
+                <Link
+                  href={config.githubUrl}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="h-5 w-5" />
+                </Link>
+              )}
+              {config.twitterUrl && (
+                <Link
+                  href={config.twitterUrl}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Twitter className="h-5 w-5" />
+                </Link>
+              )}
+              {config.linkedinUrl && (
+                <Link
+                  href={config.linkedinUrl}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Linkedin className="h-5 w-5" />
+                </Link>
+              )}
+              {config.emailUrl && (
+                <Link
+                  href={`mailto:${config.emailUrl}`}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Mail className="h-5 w-5" />
+                </Link>
+              )}
             </div>
           </div>
 
@@ -67,37 +104,34 @@ export function Footer() {
               >
                 归档
               </Link>
+              {config.enableFriendLinks && (
+                <Link
+                  href="/links"
+                  className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  友链
+                </Link>
+              )}
+              {config.enableGuestbook && (
+                <Link
+                  href="/guestbook"
+                  className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  留言板
+                </Link>
+              )}
             </div>
           </div>
 
-          {/* Categories */}
+          {/* About Blogger */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">热门分类</h3>
-            <div className="space-y-2">
-              <Link
-                href="/categories/javascript"
-                className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                JavaScript
-              </Link>
-              <Link
-                href="/categories/react"
-                className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                React
-              </Link>
-              <Link
-                href="/categories/nodejs"
-                className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                Node.js
-              </Link>
-              <Link
-                href="/categories/web"
-                className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                前端开发
-              </Link>
+            <h3 className="text-sm font-semibold">关于博主</h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>{config.bloggerName}</p>
+              <p>{config.bloggerBio}</p>
+              {config.adminEmail && (
+                <p>邮箱: {config.adminEmail}</p>
+              )}
             </div>
           </div>
 
@@ -105,19 +139,51 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">联系我</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>邮箱: contact@example.com</p>
-              <p>微信: your-wechat-id</p>
-              <p>QQ: 123456789</p>
+              {config.adminEmail && (
+                <p>邮箱: {config.adminEmail}</p>
+              )}
+              {config.siteUrl && (
+                <p>网站: {config.siteUrl}</p>
+              )}
             </div>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t text-center">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} 我的博客. Made with{' '}
-            <Heart className="inline h-4 w-4 text-red-500" /> by{' '}
+            {config.copyright || `© ${currentYear} ${config.siteName}`}
+            {config.icpNumber && (
+              <>
+                {' | '}
+                <a 
+                  href="https://beian.miit.gov.cn/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  {config.icpNumber}
+                </a>
+              </>
+            )}
+            {config.beianNumber && (
+              <>
+                {' | '}
+                <a 
+                  href="https://www.beian.gov.cn/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  {config.beianNumber}
+                </a>
+              </>
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Made with{' '}
+            <Heart className="inline h-3 w-3 text-red-500" /> by{' '}
             <Link href="/" className="text-primary hover:underline">
-              作者
+              {config.bloggerName}
             </Link>
           </p>
         </div>

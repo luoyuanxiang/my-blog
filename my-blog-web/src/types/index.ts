@@ -4,39 +4,37 @@
  */
 export interface Article {
   /** 文章唯一标识符 */
-  id: string;
+  id: number;
   /** 文章标题 */
   title: string;
-  /** 文章URL友好的标识符 */
-  slug: string;
+  /** 文章摘要描述 */
+  summary: string;
   /** 文章完整内容（Markdown格式） */
   content: string;
-  /** 文章摘要描述 */
-  excerpt: string;
+  /** 文章URL友好的标识符 */
+  slug: string;
   /** 文章封面图片URL（可选） */
   coverImage?: string;
-  /** 文章发布时间 */
-  publishedAt: string;
-  /** 文章最后更新时间 */
-  updatedAt: string;
-  /** 预计阅读时间（分钟） */
-  readTime: number;
+  /** 文章是否已发布 */
+  isPublished: boolean;
+  /** 文章是否置顶显示 */
+  isPinned: boolean;
   /** 文章浏览次数 */
-  views: number;
+  viewCount: number;
   /** 文章点赞次数 */
-  likes: number;
+  likeCount: number;
+  /** 文章评论数量 */
+  commentCount: number;
   /** 文章所属分类 */
   category: Category;
   /** 文章关联的标签列表 */
   tags: Tag[];
-  /** 文章作者信息 */
-  author: Author;
-  /** 文章评论列表 */
-  comments: Comment[];
-  /** 文章是否已发布 */
-  isPublished: boolean;
-  /** 文章是否置顶显示（可选） */
-  isPinned?: boolean;
+  /** 文章创建时间 */
+  createdAt: string;
+  /** 文章最后更新时间 */
+  updatedAt: string;
+  /** 文章发布时间 */
+  publishedAt?: string;
 }
 
 /**
@@ -109,25 +107,33 @@ export interface Author {
  */
 export interface Comment {
   /** 评论唯一标识符 */
-  id: string;
-  /** 评论内容 */
-  content: string;
+  id: number;
+  /** 评论所属文章ID */
+  articleId: number;
   /** 评论作者姓名 */
   author: string;
   /** 评论作者邮箱 */
   email: string;
   /** 评论作者网站（可选） */
   website?: string;
-  /** 评论创建时间 */
-  createdAt: string;
-  /** 评论点赞次数 */
-  likes: number;
-  /** 评论的回复列表（可选） */
-  replies?: Comment[];
+  /** 评论内容 */
+  content: string;
   /** 父评论ID（用于嵌套回复） */
-  parentId?: string;
+  parentId?: number;
   /** 评论是否已审核通过 */
   isApproved: boolean;
+  /** 评论点赞次数 */
+  likeCount: number;
+  /** 评论者IP地址 */
+  ipAddress?: string;
+  /** 评论者浏览器信息 */
+  userAgent?: string;
+  /** 评论创建时间 */
+  createdAt: string;
+  /** 评论最后更新时间 */
+  updatedAt: string;
+  /** 评论的回复列表 */
+  replies?: Comment[];
 }
 
 /**
@@ -144,11 +150,19 @@ export interface FriendLink {
   /** 友链网站描述（可选） */
   description?: string;
   /** 友链网站Logo图片URL（可选） */
-  avatar?: string;
-  /** 友链创建时间 */
-  createdAt: string;
+  logo?: string;
   /** 友链是否已审核通过 */
   isApproved: boolean;
+  /** 友链排序顺序 */
+  sortOrder?: number;
+  /** 友链点击次数 */
+  clickCount?: number;
+  /** 友链申请者邮箱 */
+  email?: string;
+  /** 友链创建时间 */
+  createdAt: string;
+  /** 友链最后更新时间 */
+  updatedAt?: string;
 }
 
 /**
@@ -169,13 +183,19 @@ export interface GuestbookMessage {
   /** 留言创建时间 */
   createdAt: string;
   /** 留言点赞次数 */
-  likes: number;
+  likeCount: number;
   /** 留言的回复列表（可选） */
   replies?: GuestbookMessage[];
   /** 父留言ID（用于嵌套回复） */
   parentId?: string;
   /** 留言是否已审核通过 */
   isApproved: boolean;
+  /** 留言者IP地址 */
+  ipAddress?: string;
+  /** 留言者浏览器信息 */
+  userAgent?: string;
+  /** 留言最后更新时间 */
+  updatedAt?: string;
 }
 
 /**
@@ -223,6 +243,31 @@ export interface ApiResponse<T> {
   data: T;
   /** 响应时间戳 */
   timestamp: number;
+}
+
+/**
+ * 分页响应类型定义
+ * 用于表示分页查询的响应格式
+ */
+export interface PageResponse<T> {
+  /** 当前页的数据列表 */
+  content: T[];
+  /** 当前页码（从0开始） */
+  page: number;
+  /** 每页大小 */
+  size: number;
+  /** 总元素数量 */
+  totalElements: number;
+  /** 总页数 */
+  totalPages: number;
+  /** 是否为第一页 */
+  first: boolean;
+  /** 是否为最后一页 */
+  last: boolean;
+  /** 是否有下一页 */
+  hasNext: boolean;
+  /** 是否有上一页 */
+  hasPrevious: boolean;
 }
 
 /**
@@ -317,6 +362,29 @@ export interface LoginResponse {
   };
   /** 令牌过期时间（毫秒） */
   expiresIn: number;
+}
+
+/**
+ * 系统设置类型定义
+ * 用于表示系统配置信息
+ */
+export interface SystemSetting {
+  /** 设置项唯一标识符 */
+  id: number;
+  /** 设置项键名 */
+  key: string;
+  /** 设置项值 */
+  value: string;
+  /** 设置项描述 */
+  description: string;
+  /** 设置项数据类型 */
+  settingType: string;
+  /** 设置项是否公开（前端可访问） */
+  isPublic: boolean;
+  /** 设置项创建时间 */
+  createdAt: string;
+  /** 设置项最后更新时间 */
+  updatedAt: string;
 }
 
 /**
