@@ -143,19 +143,24 @@ export function Pagination({
   );
 }
 
-// 分页Hook
+// 分页Hook - 支持两种模式
 export function usePagination<T>(
-  items: T[],
-  itemsPerPage: number = 10
+  itemsOrItemsPerPage: T[] | number,
+  itemsPerPage?: number
 ) {
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 判断是数组模式还是数字模式
+  const isArrayMode = Array.isArray(itemsOrItemsPerPage);
+  const items = isArrayMode ? itemsOrItemsPerPage as T[] : [];
+  const pageSize = isArrayMode ? (itemsPerPage || 10) : (itemsOrItemsPerPage as number);
+
   const totalItems = items.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   // 计算当前页显示的数据
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
   const currentItems = items.slice(startIndex, endIndex);
 
   // 重置到第一页当数据变化时
@@ -188,7 +193,7 @@ export function usePagination<T>(
     totalPages,
     totalItems,
     currentItems,
-    itemsPerPage,
+    itemsPerPage: pageSize,
     goToPage,
     goToNextPage,
     goToPreviousPage,

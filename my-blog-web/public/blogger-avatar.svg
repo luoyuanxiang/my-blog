@@ -1,0 +1,54 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="100" cy="100" r="100" fill="url(#gradient1)"/>
+  
+  <!-- 头像轮廓 -->
+  <circle cx="100" cy="100" r="85" fill="white" fill-opacity="0.98"/>
+  
+  <!-- 头部 -->
+  <circle cx="100" cy="75" r="30" fill="url(#gradient2)"/>
+  
+  <!-- 身体 -->
+  <path d="M100 105C100 105 75 125 75 145C75 155 85 165 100 165C115 165 125 155 125 145C125 125 100 105 100 105Z" fill="url(#gradient2)"/>
+  
+  <!-- 眼睛 -->
+  <circle cx="90" cy="70" r="5" fill="white"/>
+  <circle cx="110" cy="70" r="5" fill="white"/>
+  <circle cx="90" cy="70" r="2.5" fill="#1F2937"/>
+  <circle cx="110" cy="70" r="2.5" fill="#1F2937"/>
+  
+  <!-- 眼睛高光 -->
+  <circle cx="91" cy="68" r="1" fill="white"/>
+  <circle cx="111" cy="68" r="1" fill="white"/>
+  
+  <!-- 嘴巴 -->
+  <path d="M90 85C90 85 95 90 100 90C105 90 110 85 110 85" stroke="#1F2937" stroke-width="3" stroke-linecap="round" fill="none"/>
+  
+  <!-- 装饰性元素 - 代码符号 -->
+  <path d="M40 40L50 40L50 50L40 50Z" fill="white" fill-opacity="0.8"/>
+  <path d="M150 40L160 40L160 50L150 50Z" fill="white" fill-opacity="0.8"/>
+  <path d="M40 150L50 150L50 160L40 160Z" fill="white" fill-opacity="0.8"/>
+  <path d="M150 150L160 150L160 160L150 160Z" fill="white" fill-opacity="0.8"/>
+  
+  <!-- 装饰性元素 - 星星 -->
+  <path d="M25 25L30 40L45 40L32 50L37 65L25 55L13 65L18 50L5 40L20 40L25 25Z" fill="white" fill-opacity="0.7"/>
+  <path d="M175 25L180 40L195 40L182 50L187 65L175 55L163 65L168 50L155 40L170 40L175 25Z" fill="white" fill-opacity="0.7"/>
+  
+  <!-- 装饰性元素 - 代码括号 -->
+  <path d="M30 100L35 95L35 105L30 100Z" fill="white" fill-opacity="0.6"/>
+  <path d="M170 100L165 95L165 105L170 100Z" fill="white" fill-opacity="0.6"/>
+  
+  <!-- 渐变定义 -->
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A855F7;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F9FAFB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F3F4F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

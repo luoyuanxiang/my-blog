@@ -13,4 +13,5 @@ export { guestbookApiService } from './guestbook';
 export { systemSettingApiService } from './system-settings';
 export { publicApiService } from './public';
 export { urlMetadataApiService } from './url-metadata';
+export { imageApiService } from './images';
 

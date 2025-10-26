@@ -123,6 +123,17 @@ export const API_ENDPOINTS = {
   URL_METADATA: {
     FETCH: '/url-metadata/fetch',
   },
+
+  // 图片管理
+  IMAGES: {
+    LIST: '/images',
+    GET_BY_ID: (id: number) => `/images/${id}`,
+    UPLOAD: '/images/upload',
+    UPDATE: (id: number) => `/images/${id}`,
+    DELETE: (id: number) => `/images/${id}`,
+    BATCH_DELETE: '/images/batch-delete',
+    STATS: '/images/stats',
+  },
   
   // 公共API
   PUBLIC: {

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Search, Sun, Moon } from 'lucide-react';
+import { Menu, X, Search, Sun, Moon, Github } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { SearchModal } from '@/components/ui/search-modal';
@@ -107,6 +107,21 @@ export function Navigation() {
               </button>
             )}
 
+            {/* GitHub Link */}
+            {config.githubUrl && (
+              <motion.a
+                href={config.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-md hover:bg-accent"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="访问 GitHub"
+              >
+                <Github className="h-5 w-5" />
+              </motion.a>
+            )}
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -173,6 +188,21 @@ export function Navigation() {
                     {item.name}
                   </Link>
                 ))}
+                
+                {/* Mobile GitHub Link */}
+                {config.githubUrl && (
+                  <motion.a
+                    href={config.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    whileHover={{ x: 4 }}
+                  >
+                    <Github className="h-4 w-4" />
+                    <span>GitHub</span>
+                  </motion.a>
+                )}
               </div>
             </motion.div>
           )}

@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { MarkdownEditor } from '@/components/ui/markdown-editor';
+import { ImageSelector } from './image-selector';
 import Image from 'next/image';
+import type { Image as ImageType } from '@/lib/api/images';
 
 interface ArticleFormData {
   title: string;
@@ -47,6 +49,8 @@ export function ArticleEditor({ article, mode }: ArticleEditorProps) {
   const router = useRouter();
   const [editorType, setEditorType] = useState<'rich' | 'markdown'>('rich');
   const [isSaving, setIsSaving] = useState(false);
+  const [showImageSelector, setShowImageSelector] = useState(false);
+  const [selectedCoverImage, setSelectedCoverImage] = useState<ImageType | null>(null);
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
     slug: '',
@@ -89,6 +93,28 @@ export function ArticleEditor({ article, mode }: ArticleEditorProps) {
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag]
     }));
+  };
+
+  // 处理封面图片选择
+  const handleCoverImageSelect = (image: ImageType) => {
+    setSelectedCoverImage(image);
+    setFormData(prev => ({
+      ...prev,
+      coverImage: image.url
+    }));
+    setShowImageSelector(false);
+  };
+
+  // 处理封面图片输入
+  const handleCoverImageInput = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      coverImage: value
+    }));
+    // 如果输入的是URL，清除选中的图片
+    if (value && !value.startsWith('/api/images/')) {
+      setSelectedCoverImage(null);
+    }
   };
 
   const handleSave = async () => {
@@ -249,22 +275,63 @@ export function ArticleEditor({ article, mode }: ArticleEditorProps) {
             {/* 封面图片 */}
             <div className="bg-card rounded-lg border p-4">
               <label className="block text-sm font-medium mb-2">封面图片</label>
+              
+              {/* 图片选择按钮 */}
+              <div className="flex space-x-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setShowImageSelector(true)}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm"
+                >
+                  选择图片
+                </button>
+                {selectedCoverImage && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCoverImage(null);
+                      setFormData(prev => ({ ...prev, coverImage: '' }));
+                    }}
+                    className="px-4 py-2 bg-muted text-muted-foreground rounded-md hover:bg-muted/80 transition-colors text-sm"
+                  >
+                    清除选择
+                  </button>
+                )}
+              </div>
+
+              {/* 手动输入URL */}
               <input
                 type="url"
                 value={formData.coverImage}
-                onChange={(e) => handleInputChange('coverImage', e.target.value)}
-                placeholder="https://example.com/image.jpg"
+                onChange={(e) => handleCoverImageInput(e.target.value)}
+                placeholder="https://example.com/image.jpg 或选择上方图片"
                 className="w-full p-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent mb-3"
               />
+
+              {/* 图片预览 */}
               {formData.coverImage && (
-                <div className="w-full h-32 rounded-lg overflow-hidden">
+                <div className="w-full h-32 rounded-lg overflow-hidden border">
                   <Image
                     src={formData.coverImage}
                     alt="封面预览"
                     width={300}
                     height={128}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
                   />
+                  <div className="hidden w-full h-full flex items-center justify-center bg-muted">
+                    <span className="text-muted-foreground">图片加载失败</span>
+                  </div>
+                </div>
+              )}
+
+              {/* 选中图片信息 */}
+              {selectedCoverImage && (
+                <div className="mt-2 p-2 bg-muted/50 rounded-md text-sm text-muted-foreground">
+                  已选择: {selectedCoverImage.originalName} ({Math.round(selectedCoverImage.size / 1024)}KB)
                 </div>
               )}
             </div>
@@ -333,6 +400,14 @@ export function ArticleEditor({ article, mode }: ArticleEditorProps) {
           </div>
         </div>
       </div>
+
+      {/* 图片选择器 */}
+      <ImageSelector
+        isOpen={showImageSelector}
+        onClose={() => setShowImageSelector(false)}
+        onSelect={handleCoverImageSelect}
+        multiple={false}
+      />
     </div>
   );
 }

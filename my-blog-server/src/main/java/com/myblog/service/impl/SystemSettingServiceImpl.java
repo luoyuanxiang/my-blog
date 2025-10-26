@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 系统设置服务实现类
@@ -97,6 +96,13 @@ public class SystemSettingServiceImpl implements SystemSettingService {
                 systemSettingRepository.save(setting);
             }
         }
+    }
+
+    @Override
+    public String getSettingValue(String key, String defaultValue) {
+        return systemSettingRepository.findByKey(key)
+            .map(SystemSetting::getValue)
+            .orElse(defaultValue);
     }
 
     private SystemSettingDTO convertToDTO(SystemSetting setting) {

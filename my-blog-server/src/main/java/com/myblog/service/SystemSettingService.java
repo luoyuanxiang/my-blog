@@ -73,4 +73,12 @@ public interface SystemSettingService {
      * @param settings 设置列表
      */
     void updateSettings(List<SystemSettingDTO> settings);
+    
+    /**
+     * 根据键名获取设置值，如果不存在则返回默认值
+     * @param key 设置键名
+     * @param defaultValue 默认值
+     * @return 设置值或默认值
+     */
+    String getSettingValue(String key, String defaultValue);
 }

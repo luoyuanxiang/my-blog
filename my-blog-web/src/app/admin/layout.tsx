@@ -20,7 +20,8 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
-  UserCircle
+  UserCircle,
+  Image as ImageIcon
 } from 'lucide-react';
 import { AdminAuthProvider, AdminAuthGuard, useAdminAuth } from '@/lib/hooks/use-admin-auth';
 
@@ -33,6 +34,7 @@ const navigation = [
   { name: '文章管理', href: '/admin/articles', icon: FileText },
   { name: '标签管理', href: '/admin/tags', icon: Tag },
   { name: '分类管理', href: '/admin/categories', icon: FolderOpen },
+  { name: '图片管理', href: '/admin/images', icon: ImageIcon },
   { name: '友链管理', href: '/admin/links', icon: LinkIcon },
   { name: '评论管理', href: '/admin/comments', icon: MessageSquare },
   { name: '留言板管理', href: '/admin/guestbook', icon: MessageCircle },

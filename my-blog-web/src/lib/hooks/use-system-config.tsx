@@ -58,12 +58,12 @@ const defaultConfig: SystemConfig = {
   adminName: '管理员',
   bloggerName: '博主',
   bloggerBio: '热爱技术，分享知识',
-  bloggerAvatar: '',
+  bloggerAvatar: '/blogger-avatar.svg',
   
   theme: 'auto',
   primaryColor: '#3b82f6',
-  logo: '',
-  favicon: '',
+  logo: '/logo.svg',
+  favicon: '/favicon.svg',
   
   metaTitle: '个人博客 - 技术分享',
   metaDescription: '分享技术文章，记录学习心得',
@@ -74,7 +74,7 @@ const defaultConfig: SystemConfig = {
   enableFriendLinks: true,
   enableSearch: true,
   
-  githubUrl: '',
+  githubUrl: 'https://github.com/luoyuanxiang',
   twitterUrl: '',
   linkedinUrl: '',
   emailUrl: '',

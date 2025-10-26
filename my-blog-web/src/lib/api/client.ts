@@ -110,10 +110,22 @@ class HttpClient {
 
   // POST 请求
   async post<T>(endpoint: string, data?: any, customHeaders?: Record<string, string>): Promise<T> {
+    const headers = this.buildHeaders(customHeaders);
+    
+    // 如果是FormData，不设置Content-Type，让浏览器自动设置
+    let body: any;
+    if (data instanceof FormData) {
+      body = data;
+      // 删除Content-Type头，让浏览器自动设置multipart/form-data
+      delete headers['Content-Type'];
+    } else {
+      body = data ? JSON.stringify(data) : undefined;
+    }
+    
     const response = await fetch(this.buildURL(endpoint), {
       method: 'POST',
-      headers: this.buildHeaders(customHeaders),
-      body: data ? JSON.stringify(data) : undefined,
+      headers,
+      body,
       signal: AbortSignal.timeout(this.timeout),
     });
 
@@ -122,10 +134,22 @@ class HttpClient {
 
   // PUT 请求
   async put<T>(endpoint: string, data?: any, customHeaders?: Record<string, string>): Promise<T> {
+    const headers = this.buildHeaders(customHeaders);
+    
+    // 如果是FormData，不设置Content-Type，让浏览器自动设置
+    let body: any;
+    if (data instanceof FormData) {
+      body = data;
+      // 删除Content-Type头，让浏览器自动设置multipart/form-data
+      delete headers['Content-Type'];
+    } else {
+      body = data ? JSON.stringify(data) : undefined;
+    }
+    
     const response = await fetch(this.buildURL(endpoint), {
       method: 'PUT',
-      headers: this.buildHeaders(customHeaders),
-      body: data ? JSON.stringify(data) : undefined,
+      headers,
+      body,
       signal: AbortSignal.timeout(this.timeout),
     });
 
